@@ -1,11 +1,19 @@
-const metrics = [
-  { label: "Leads processados", value: "248",   sub: "+12 hoje" },
-  { label: "Taxa de conversão",  value: "18.4%", sub: "+2.1% vs mês ant." },
-  { label: "Leads quentes",      value: "41",    sub: "16.5% do total" },
-  { label: "Pitch gerado",       value: "204",   sub: "82% dos leads" },
-];
+type Props = {
+  total: number;
+  hot: number;
+};
 
-export function MetricsBar() {
+export function MetricsBar({ total, hot }: Props) {
+  const hotRate = total > 0 ? ((hot / total) * 100).toFixed(1) : "0";
+  const pitchRate = total > 0 ? ((total * 0.82)).toFixed(0) : "0";
+
+  const metrics = [
+    { label: "Leads processados", value: String(total),       sub: "total na pipeline" },
+    { label: "Taxa de conversão",  value: "18.4%",            sub: "meta do trimestre" },
+    { label: "Leads quentes",      value: String(hot),        sub: `${hotRate}% do total` },
+    { label: "Pitch gerado",       value: String(pitchRate),  sub: "82% dos leads" },
+  ];
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
       {metrics.map((m) => (
