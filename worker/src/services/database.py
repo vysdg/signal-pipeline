@@ -13,14 +13,18 @@ def get_connection():
 
 def save_lead(raw_text: str, source: str, embedding: list,
               temperature: str, pitch: str,
+              score: int = 0, niche: str = "", pain_point: str = "",
               contact_name: str = "", contact_email: str = "",
               contact_company: str = ""):
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute("""
-            INSERT INTO leads (raw_text, source, embedding, temperature, pitch,
-                               contact_name, contact_email, contact_company)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO leads (
+                raw_text, source, embedding, temperature, pitch,
+                score, niche, pain_point,
+                contact_name, contact_email, contact_company
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (raw_text, source, embedding, temperature, pitch,
+              score, niche, pain_point,
               contact_name, contact_email, contact_company))
     conn.commit()

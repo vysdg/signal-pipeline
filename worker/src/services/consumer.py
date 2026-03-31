@@ -17,25 +17,28 @@ def process_message(ch, method, properties, body):
         raw_text    = payload["raw_text"]
         cleaned     = clean_text(raw_text)
         embedding   = generate_embedding(cleaned)
-        temperature = classify_lead(cleaned)
-        pitch       = generate_pitch(cleaned, temperature)
+        classified  = classify_lead(cleaned)
+        pitch       = generate_pitch(cleaned, classified["temperature"])
 
         save_lead(
             raw_text=cleaned,
             source=payload.get("source", "unknown"),
             embedding=embedding,
-            temperature=temperature,
+            temperature=classified["temperature"],
             pitch=pitch,
+            score=classified["score"],
+            niche=classified["niche"],
+            pain_point=classified["pain_point"],
             contact_name=contact.get("name", ""),
             contact_email=contact.get("email", ""),
             contact_company=contact.get("company", ""),
         )
 
         ch.basic_ack(delivery_tag=method.delivery_tag)
-        print(f"[worker] lead processado — temperatura: {temperature}")
+        print(f"[worker] processado — {classified['temperature']} · score {classified['score']} · nicho: {classified['niche']}")
 
     except Exception as e:
-        print(f"[worker] erro ao processar mensagem: {e}")
+        print(f"[worker] erro: {e}")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 def start_consumer():
