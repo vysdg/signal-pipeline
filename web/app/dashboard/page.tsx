@@ -22,7 +22,8 @@ const MOCK_LEADS: Lead[] = [
 
 async function getLeads(): Promise<Lead[]> {
   try {
-    const res = await fetch("http://localhost:3001/api/leads", { cache: "no-store" });
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+    const res = await fetch(`${baseUrl}/api/leads`, { cache: "no-store" });
     if (!res.ok) throw new Error("API indisponível");
     const data = await res.json();
     if (!data.leads || data.leads.length === 0) return MOCK_LEADS;

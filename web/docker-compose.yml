@@ -29,7 +29,7 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
     ports:
       - "5672:5672"
-      - "15672:15672"  # management UI
+      - "15672:15672"
     networks:
       - signal_net
     healthcheck:
@@ -77,6 +77,9 @@ services:
     container_name: signal_web
     restart: unless-stopped
     env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NEXT_PUBLIC_API_URL: http://signal_web:3001
     ports:
       - "3001:3001"
     depends_on:
