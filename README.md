@@ -2,7 +2,7 @@
 
 > Pipeline de inteligência de vendas orientada a eventos — processa interações brutas de CRM, classifica intenção de compra com IA e gera pitches personalizados automaticamente.
 
-![dashboard](docs/dashboard-preview.png)
+![dashboard](./docs/dashboard-preview.png)
 
 ## O problema que resolve
 
@@ -39,7 +39,7 @@ CRM / Webhook
 ┌─────────────────────────────┐
 │  PostgreSQL + pgvector       │  ← armazena leads, embeddings, pitches
 └─────────────────────────────┘
-             │ API route (futuro)
+             │
              ▼
 ┌─────────────────────────────┐
 │  Web  (Next.js + Tailwind)   │  ← dashboard Revenue Intelligence
@@ -49,7 +49,7 @@ CRM / Webhook
 ## Stack
 
 | Camada | Tecnologia | Decisão |
-|--------|-----------|---------|
+|---|---|---|
 | API / Ingestão | Node.js + TypeScript + Express | I/O não-bloqueante para alta concorrência no webhook |
 | Mensageria | RabbitMQ | Desacopla ingestão do processamento; garante durabilidade das mensagens |
 | ETL + IA | Python + LangChain + OpenAI | Ecossistema maduro para data science e orquestração de agentes |
@@ -103,7 +103,7 @@ cp .env.example .env
 
 ### 2. Suba toda a infra
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 Isso inicializa:
@@ -133,8 +133,6 @@ Resposta esperada:
 { "status": "queued", "message": "Lead accepted and queued for processing" }
 ```
 
-O worker processa em background — em segundos o lead aparece no dashboard com temperatura e pitch gerado.
-
 ### 4. Acesse o dashboard
 ```
 http://localhost:3001/dashboard
@@ -142,16 +140,16 @@ http://localhost:3001/dashboard
 
 ## Decisões de arquitetura
 
-Documentadas em [`docs/ADR-001-node-python-split.md`](docs/ADR-001-node-python-split.md)
+Documentadas em [`docs/ADR-001-node-python-split.md`](./docs/ADR-001-node-python-split.md)
 
 ## Melhorias planejadas
 
-- [ ] Autenticação JWT no webhook (HMAC signature validation)
-- [ ] Endpoint REST para listar leads do banco real no dashboard
-- [ ] Testes de integração com Vitest (API) e pytest (worker)
-- [ ] Monitoramento com Prometheus + Grafana
-- [ ] CI/CD com GitHub Actions
-- [ ] Rate limiting por origem no webhook
+- Autenticação JWT no webhook (HMAC signature validation)
+- Endpoint REST para busca semântica por similaridade de leads
+- Testes de integração com Vitest (API) e pytest (worker)
+- Monitoramento com Prometheus + Grafana
+- CI/CD com GitHub Actions
+- Rate limiting por origem no webhook
 
 ## Autor
 
