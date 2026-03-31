@@ -12,5 +12,6 @@ export async function connectBroker(): Promise<void> {
 
 export async function publishLead(payload: object): Promise<void> {
   const message = Buffer.from(JSON.stringify(payload));
-  channel.sendToQueue(QUEUE_NAME, message, { persistent: true });
+  const result = channel.sendToQueue(QUEUE_NAME, message, { persistent: true });
+  console.log(`[broker] publish result: ${result} — payload: ${JSON.stringify(payload).slice(0, 80)}`);
 }

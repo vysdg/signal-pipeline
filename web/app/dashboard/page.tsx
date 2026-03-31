@@ -1,71 +1,76 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { MetricsBar } from "./components/MetricsBar";
-import { LeadCard } from "./components/LeadCard";
-
-type Lead = {
-  id: string;
-  contact: { name: string; email: string; company?: string };
-  source: string;
-  temperature: "QUENTE" | "MORNO" | "FRIO";
-  pitch: string;
-  created_at: string;
-};
-
-const MOCK_LEADS: Lead[] = [
-  {
-    id: "1",
-    contact: { name: "Ana Souza", email: "ana@techcorp.com.br", company: "TechCorp" },
-    source: "hubspot", temperature: "QUENTE",
-    pitch: "Olá Ana, nossa solução pode ser implementada em até 2 semanas. Temos plano anual com 20% de desconto. Posso agendar uma conversa rápida?",
-    created_at: "2026-03-30T10:00:00Z",
-  },
-];
+import { LeadTable, Lead } from "./components/LeadTable";
+import { VolumeChart } from "./components/VolumeChart";
+import { FunnelChart } from "./components/FunnelChart";
+import { NewLeadButton } from "./components/NewLeadButton";
+import pool from "@/lib/db";
 
 async function getLeads(): Promise<Lead[]> {
+  noStore();
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-    const res = await fetch(`${baseUrl}/api/leads`, { cache: "no-store" });
-    if (!res.ok) throw new Error("API indisponível");
-    const data = await res.json();
-    if (!data.leads || data.leads.length === 0) return MOCK_LEADS;
-
-    return data.leads.map((l: any) => ({
-      id: l.id,
-      contact: {
-        name:    l.contact_name  || "Lead",
-        email:   l.contact_email || `lead-${l.id.slice(0,6)}@signal.ai`,
-        company: l.contact_company || undefined,
-      },
-      source:      l.source,
-      temperature: l.temperature,
-      pitch:       l.pitch,
-      created_at:  l.created_at,
-    }));
+    const result = await pool.query(`
+      SELECT id, raw_text, source, temperature, pitch,
+             score, niche, pain_point,
+             contact_name, contact_email, contact_company, created_at
+      FROM leads ORDER BY created_at DESC LIMIT 100
+    `);
+    return result.rows;
   } catch {
-    return MOCK_LEADS;
+    return [];
   }
+}
+
+function buildChartData(leads: Lead[]) {
+  const days: Record<string, { quente: number; morno: number; frio: number }> = {};
+  leads.forEach(l => {
+    const d = new Date(l.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    if (!days[d]) days[d] = { quente: 0, morno: 0, frio: 0 };
+    if (l.temperature === "QUENTE") days[d].quente++;
+    else if (l.temperature === "MORNO") days[d].morno++;
+    else days[d].frio++;
+  });
+  return Object.entries(days).slice(-7).map(([date, v]) => ({ date, ...v }));
 }
 
 export default async function DashboardPage() {
   const leads = await getLeads();
+  const hot   = leads.filter(l => l.temperature === "QUENTE").length;
+  const warm  = leads.filter(l => l.temperature === "MORNO" || l.temperature === "QUENTE").length;
+  const avgScore = leads.length > 0 ? Math.round(leads.reduce((s, l) => s + (l.score || 0), 0) / leads.length) : 0;
+  const chartData = buildChartData(leads);
+
   return (
-    <main className="min-h-screen bg-gray-50 p-6 md:p-10">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Revenue Intelligence</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Leads processados pela pipeline de IA — signal-pipeline
-          </p>
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-between mb-8 animate-fade-up">
+          <div>
+            <h1 className="text-xl font-medium text-gray-900">Revenue Intelligence</h1>
+            <p className="text-xs text-gray-400 mt-0.5">signal-pipeline · {leads.length} leads processados</p>
+          </div>
+          <NewLeadButton />
         </div>
-        <MetricsBar total={leads.length} hot={leads.filter(l => l.temperature === "QUENTE").length} />
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-medium text-gray-700">Leads recentes</h2>
-          <span className="text-xs text-gray-400">{leads.length} leads</span>
+
+        <MetricsBar
+          total={leads.length}
+          hot={hot}
+          avgScore={avgScore}
+          avgTime="1.8s"
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+          <div className="md:col-span-2">
+            <VolumeChart data={chartData.length > 0 ? chartData : [{ date: "hoje", quente: 0, morno: 0, frio: 0 }]} />
+          </div>
+          <FunnelChart
+            total={leads.length}
+            processed={leads.length}
+            warm={warm}
+            hot={hot}
+          />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {leads.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} />
-          ))}
-        </div>
+
+        <LeadTable leads={leads} />
       </div>
     </main>
   );
