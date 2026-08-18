@@ -1,49 +1,60 @@
 "use client";
-import { useEffect, useRef } from "react";
-import { Chart, registerables } from "chart.js";
-Chart.register(...registerables);
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Legend,
+} from "recharts";
 
 type Props = { data: { date: string; quente: number; morno: number; frio: number }[] };
 
-export function VolumeChart({ data }: Props) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const chart = useRef<Chart | null>(null);
-
-  useEffect(() => {
-    if (!ref.current) return;
-    if (chart.current) chart.current.destroy();
-
-    chart.current = new Chart(ref.current, {
-      type: "bar",
-      data: {
-        labels: data.map(d => d.date),
-        datasets: [
-          { label: "Quente", data: data.map(d => d.quente), backgroundColor: "#FCA5A5", borderRadius: 4 },
-          { label: "Morno",  data: data.map(d => d.morno),  backgroundColor: "#FCD34D", borderRadius: 4 },
-          { label: "Frio",   data: data.map(d => d.frio),   backgroundColor: "#93C5FD", borderRadius: 4 },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 11 } } } },
-        scales: {
-          x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 } } },
-          y: { stacked: true, grid: { color: "#f3f4f6" }, ticks: { font: { size: 11 } } },
-        },
-        animation: { duration: 800, easing: "easeOutQuart" },
-      },
-    });
-
-    return () => chart.current?.destroy();
-  }, [data]);
-
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string }) {
+  if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 animate-fade-up stagger-3">
-      <p className="text-xs text-gray-400 uppercase tracking-wide mb-4">Volume por temperatura</p>
-      <div style={{ height: 180 }}>
-        <canvas ref={ref} />
-      </div>
+    <div style={{
+      background: "var(--bg-elevated)",
+      border: "1px solid var(--border-strong)",
+      borderRadius: 10, padding: "10px 14px",
+      fontSize: 12, color: "var(--text-primary)",
+    }}>
+      <p style={{ color: "var(--text-secondary)", marginBottom: 6, fontSize: 11 }}>{label}</p>
+      {payload.map(p => (
+        <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: p.color, flexShrink: 0 }} />
+          <span style={{ color: "var(--text-secondary)" }}>{p.name}:</span>
+          <span style={{ fontWeight: 500 }}>{p.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function VolumeChart({ data }: Props) {
+  return (
+    <div className="glass animate-rise s3" style={{ padding: "20px 20px 12px" }}>
+      <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>
+        Volume por temperatura
+      </p>
+      <ResponsiveContainer width="100%" height={180}>
+        <BarChart data={data} barSize={14} barGap={3}>
+          <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+            axisLine={false} tickLine={false}
+          />
+          <YAxis
+            tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+            axisLine={false} tickLine={false} width={24}
+          />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
+          <Legend
+            wrapperStyle={{ fontSize: 10, color: "var(--text-secondary)", paddingTop: 8 }}
+            iconSize={6} iconType="circle"
+          />
+          <Bar dataKey="quente" name="Quente" fill="#ff4b4b" radius={[3, 3, 0, 0]} opacity={0.9} />
+          <Bar dataKey="morno"  name="Morno"  fill="#f59e0b" radius={[3, 3, 0, 0]} opacity={0.9} />
+          <Bar dataKey="frio"   name="Frio"   fill="#3b82f6" radius={[3, 3, 0, 0]} opacity={0.9} />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }

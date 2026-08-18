@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import { NewLeadForm } from "./NewLeadForm";
 import { useRouter } from "next/navigation";
 
@@ -15,9 +16,20 @@ export function NewLeadButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="bg-gray-900 text-white text-sm px-4 py-2 rounded-xl hover:bg-gray-700 transition-colors"
+        style={{
+          display: "flex", alignItems: "center", gap: 6,
+          background: "var(--green)", color: "#09090c",
+          border: "none", borderRadius: 10,
+          padding: "8px 14px", fontSize: 12, fontWeight: 600,
+          cursor: "pointer",
+          transition: "opacity 0.15s, transform 0.15s",
+          boxShadow: "0 0 16px rgba(0,214,143,0.25)",
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.88"; (e.currentTarget as HTMLButtonElement).style.transform = "scale(0.97)"; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
       >
-        + Novo lead
+        <Plus size={13} strokeWidth={2.5} />
+        Novo lead
       </button>
       {open && <NewLeadForm onClose={() => setOpen(false)} onSuccess={handleSuccess} />}
     </>

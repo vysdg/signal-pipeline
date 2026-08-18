@@ -26,10 +26,14 @@ function initials(name: string) {
   return name.split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase() || "?";
 }
 
-const avatarColors: Record<Temperature, string> = {
-  QUENTE: "bg-red-50 text-red-600",
-  MORNO:  "bg-amber-50 text-amber-600",
-  FRIO:   "bg-blue-50 text-blue-600",
+const avatarAccent: Record<Temperature, { bg: string; color: string }> = {
+  QUENTE: { bg: "rgba(255,75,75,0.12)",   color: "#ff7070" },
+  MORNO:  { bg: "rgba(245,158,11,0.12)",  color: "#fbbf24" },
+  FRIO:   { bg: "rgba(59,130,246,0.12)",  color: "#60a5fa" },
+};
+
+const filterLabel: Record<string, string> = {
+  Todos: "Todos", QUENTE: "Quente", MORNO: "Morno", FRIO: "Frio",
 };
 
 export function LeadTable({ leads }: Props) {
@@ -40,79 +44,126 @@ export function LeadTable({ leads }: Props) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-gray-100 animate-fade-up stagger-5">
-        <div className="flex items-center justify-between p-5 border-b border-gray-50">
-          <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Leads recentes</p>
-          <div className="flex gap-1">
+      <div className="glass animate-rise s5" style={{ overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "16px 20px",
+          borderBottom: "1px solid var(--border)",
+        }}>
+          <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Leads recentes
+          </p>
+          <div style={{ display: "flex", gap: 4 }}>
             {FILTERS.map(f => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-3 py-1 rounded-full text-xs transition-all ${
-                  filter === f
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-                }`}
+                style={{
+                  padding: "4px 10px", borderRadius: 99, fontSize: 11,
+                  cursor: "pointer", border: "none",
+                  background: filter === f ? "var(--green)" : "transparent",
+                  color: filter === f ? "#09090c" : "var(--text-muted)",
+                  fontWeight: filter === f ? 600 : 400,
+                  transition: "background 0.15s, color 0.15s",
+                }}
               >
-                {f === "Todos" ? "Todos" : f.charAt(0) + f.slice(1).toLowerCase()}
+                {filterLabel[f]}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        {/* Table */}
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr className="text-xs text-gray-400 border-b border-gray-50">
-                <th className="text-left px-5 py-3 font-normal">Contato</th>
-                <th className="text-left px-4 py-3 font-normal">Origem</th>
-                <th className="text-left px-4 py-3 font-normal">Nicho</th>
-                <th className="text-left px-4 py-3 font-normal">Dor principal</th>
-                <th className="text-left px-4 py-3 font-normal">Temperatura</th>
-                <th className="text-left px-4 py-3 font-normal w-32">Score IA</th>
-                <th className="text-left px-4 py-3 font-normal">Data</th>
-                <th className="px-4 py-3"></th>
+              <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                {["Contato", "Origem", "Nicho", "Dor principal", "Temperatura", "Score IA", "Data", ""].map(h => (
+                  <th key={h} style={{
+                    textAlign: "left", padding: "10px 16px",
+                    fontSize: 10, color: "var(--text-muted)",
+                    fontWeight: 400, textTransform: "uppercase", letterSpacing: "0.06em",
+                  }}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((lead, i) => (
-                <tr
-                  key={lead.id}
-                  className={`border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer animate-fade-up`}
-                  style={{ animationDelay: `${i * 40}ms` }}
-                  onClick={() => setSelected(lead)}
-                >
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${avatarColors[lead.temperature]}`}>
-                        {initials(lead.contact_name)}
+              {filtered.map((lead, i) => {
+                const av = avatarAccent[lead.temperature];
+                return (
+                  <tr
+                    key={lead.id}
+                    className="animate-rise"
+                    style={{
+                      borderBottom: "1px solid var(--border)",
+                      cursor: "pointer",
+                      animationDelay: `${i * 35}ms`,
+                      transition: "background 0.12s",
+                    }}
+                    onClick={() => setSelected(lead)}
+                    onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = "var(--bg-hover)"}
+                    onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = "transparent"}
+                  >
+                    {/* Contact */}
+                    <td style={{ padding: "14px 16px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{
+                          width: 30, height: 30, borderRadius: "50%",
+                          background: av.bg, color: av.color,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 11, fontWeight: 600, flexShrink: 0,
+                        }}>
+                          {initials(lead.contact_name)}
+                        </div>
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)" }}>
+                            {lead.contact_name || "—"}
+                          </p>
+                          <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{lead.contact_email}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{lead.contact_name || "—"}</p>
-                        <p className="text-xs text-gray-400">{lead.contact_email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-md">{lead.source}</span>
-                  </td>
-                  <td className="px-4 py-4 text-xs text-gray-500">{lead.niche || "—"}</td>
-                  <td className="px-4 py-4 text-xs text-gray-500 max-w-48 truncate">{lead.pain_point || "—"}</td>
-                  <td className="px-4 py-4">
-                    <TemperatureBadge temperature={lead.temperature} />
-                  </td>
-                  <td className="px-4 py-4 w-36">
-                    <ScoreBar score={lead.score || 0} temperature={lead.temperature} />
-                  </td>
-                  <td className="px-4 py-4 text-xs text-gray-400">
-                    {new Date(lead.created_at).toLocaleDateString("pt-BR")}
-                  </td>
-                  <td className="px-4 py-4 text-xs text-gray-400">›</td>
-                </tr>
-              ))}
+                    </td>
+                    {/* Source */}
+                    <td style={{ padding: "14px 16px" }}>
+                      <span style={{
+                        fontSize: 10, padding: "3px 8px", borderRadius: 6,
+                        background: "var(--bg-elevated)", color: "var(--text-secondary)",
+                        fontWeight: 500,
+                      }}>
+                        {lead.source}
+                      </span>
+                    </td>
+                    {/* Niche */}
+                    <td style={{ padding: "14px 16px", fontSize: 12, color: "var(--text-secondary)" }}>
+                      {lead.niche || "—"}
+                    </td>
+                    {/* Pain */}
+                    <td style={{ padding: "14px 16px", fontSize: 12, color: "var(--text-secondary)", maxWidth: 180 }}>
+                      <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {lead.pain_point || "—"}
+                      </span>
+                    </td>
+                    {/* Badge */}
+                    <td style={{ padding: "14px 16px" }}>
+                      <TemperatureBadge temperature={lead.temperature} />
+                    </td>
+                    {/* Score */}
+                    <td style={{ padding: "14px 16px", width: 130 }}>
+                      <ScoreBar score={lead.score || 0} temperature={lead.temperature} />
+                    </td>
+                    {/* Date */}
+                    <td style={{ padding: "14px 16px", fontSize: 11, color: "var(--text-muted)" }}>
+                      {new Date(lead.created_at).toLocaleDateString("pt-BR")}
+                    </td>
+                    {/* Arrow */}
+                    <td style={{ padding: "14px 16px", color: "var(--text-muted)", fontSize: 14 }}>›</td>
+                  </tr>
+                );
+              })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-sm text-gray-400">
+                  <td colSpan={8} style={{ padding: "48px", textAlign: "center", fontSize: 13, color: "var(--text-muted)" }}>
                     Nenhum lead encontrado
                   </td>
                 </tr>
@@ -122,9 +173,7 @@ export function LeadTable({ leads }: Props) {
         </div>
       </div>
 
-      {selected && (
-        <LeadDetailSheet lead={selected} onClose={() => setSelected(null)} />
-      )}
+      {selected && <LeadDetailSheet lead={selected} onClose={() => setSelected(null)} />}
     </>
   );
 }
