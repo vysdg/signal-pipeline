@@ -1,29 +1,30 @@
 type Props = { score: number; temperature: "QUENTE" | "MORNO" | "FRIO" };
 
-const colors: Record<string, string> = {
-  QUENTE: "#ff4b4b",
-  MORNO:  "#f59e0b",
-  FRIO:   "#3b82f6",
+const clr: Record<string, string> = {
+  QUENTE: "var(--hot)",
+  MORNO:  "var(--warm)",
+  FRIO:   "var(--cold)",
 };
 
 export function ScoreBar({ score, temperature }: Props) {
-  const color = colors[temperature] ?? colors.FRIO;
+  const color = clr[temperature] ?? "var(--cold)";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-primary)", width: 22, flexShrink: 0 }}>
+      <span className="mono" style={{ fontSize: 12, color: "var(--t0)", width: 20, flexShrink: 0 }}>
         {score}
       </span>
       <div style={{
-        flex: 1, height: 3,
-        background: "rgba(255,255,255,0.06)",
-        borderRadius: 99, overflow: "hidden",
+        flex: 1, height: 2,
+        background: "var(--b1)",
+        borderRadius: 99,
+        overflow: "hidden",
       }}>
         <div style={{
-          height: "100%", borderRadius: 99,
-          width: `${score}%`,
+          height: "100%",
+          width: `${Math.max(score, 2)}%`,
           background: color,
-          boxShadow: `0 0 6px ${color}80`,
-          transition: "width 0.8s cubic-bezier(0.16,1,0.3,1)",
+          borderRadius: 99,
+          transition: "width 0.6s cubic-bezier(0.16,1,0.3,1)",
         }} />
       </div>
     </div>

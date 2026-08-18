@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { X, Copy, Check, Mail, Building2, Clock } from "lucide-react";
+import { motion } from "framer-motion";
+import { X, Copy, Check } from "lucide-react";
 import { Lead } from "./LeadTable";
 import { TemperatureBadge } from "./TemperatureBadge";
 import { ScoreBar } from "./ScoreBar";
@@ -11,16 +12,32 @@ function initials(name: string) {
   return name.split(" ").slice(0, 2).map(n => n[0]).join("").toUpperCase() || "?";
 }
 
-const tempAccent: Record<string, string> = {
-  QUENTE: "#ff4b4b", MORNO: "#f59e0b", FRIO: "#3b82f6",
+const tempColor: Record<string, string> = {
+  QUENTE: "var(--hot)",
+  MORNO:  "var(--warm)",
+  FRIO:   "var(--cold)",
 };
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "9px 0",
+      borderBottom: "1px solid var(--b0)",
+    }}>
+      <span className="label">{label}</span>
+      <span style={{ fontSize: 12, color: "var(--t0)" }}>{value || "—"}</span>
+    </div>
+  );
+}
 
 export function LeadDetailSheet({ lead, onClose }: Props) {
   const [copied, setCopied] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const accent = tempColor[lead.temperature] ?? "var(--t1)";
 
   useEffect(() => {
-    requestAnimationFrame(() => setVisible(true));
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -32,88 +49,111 @@ export function LeadDetailSheet({ lead, onClose }: Props) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const accent = tempAccent[lead.temperature] ?? "#7c7c99";
-
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
       style={{
         position: "fixed", inset: 0, zIndex: 50,
-        background: "rgba(0,0,0,0.6)",
-        backdropFilter: "blur(6px)",
-        display: "flex", justifyContent: "flex-end",
+        background: "rgba(0,0,0,0.5)",
+        backdropFilter: "blur(4px)",
+        display: "flex",
+        justifyContent: "flex-end",
       }}
       onClick={onClose}
     >
-      <div
+      <motion.div
+        initial={{ x: 32, opacity: 0 }}
+        animate={{ x: 0,  opacity: 1 }}
+        exit={{ x: 32, opacity: 0 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
         style={{
-          background: "var(--bg-surface)",
-          borderLeft: "1px solid var(--border-strong)",
-          height: "100%", width: "100%", maxWidth: 460,
-          display: "flex", flexDirection: "column",
-          transform: visible ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.35s cubic-bezier(0.16,1,0.3,1)",
+          background: "var(--s1)",
+          borderLeft: "1px solid var(--b1)",
+          height: "100%",
+          width: "100%",
+          maxWidth: 420,
+          display: "flex",
+          flexDirection: "column",
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Accent top bar */}
-        <div style={{ height: 3, background: accent, opacity: 0.8, flexShrink: 0 }} />
+        {/* Top accent line */}
+        <div style={{ height: 2, background: accent, flexShrink: 0 }} />
 
         {/* Header */}
         <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "20px 24px",
-          borderBottom: "1px solid var(--border)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "16px 20px",
+          borderBottom: "1px solid var(--b0)",
           flexShrink: 0,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{
-              width: 38, height: 38, borderRadius: "50%",
-              background: `${accent}20`, color: accent,
+              width: 32, height: 32,
+              borderRadius: "50%",
+              border: `1px solid ${accent}40`,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 13, fontWeight: 600, flexShrink: 0,
+              fontSize: 11, fontWeight: 600,
+              color: accent,
             }}>
               {initials(lead.contact_name)}
             </div>
             <div>
-              <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
+              <p style={{ fontSize: 13, fontWeight: 500, color: "var(--t0)" }}>
                 {lead.contact_name || "Lead"}
               </p>
-              <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
+              <p style={{ fontSize: 11, color: "var(--t2)" }}>
                 {lead.contact_company || lead.contact_email}
               </p>
             </div>
           </div>
+
           <button
             onClick={onClose}
             style={{
-              width: 28, height: 28, borderRadius: 8,
-              background: "var(--bg-elevated)", border: "none",
+              width: 26, height: 26,
+              borderRadius: 4,
+              border: "1px solid var(--b1)",
+              background: "transparent",
               display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", color: "var(--text-secondary)",
-              transition: "background 0.15s",
+              cursor: "pointer",
+              color: "var(--t2)",
+              transition: "border-color 0.12s, color 0.12s",
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--b2)";
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--t0)";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--b1)";
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--t2)";
             }}
           >
-            <X size={14} />
+            <X size={12} />
           </button>
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* Stats grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
+          {/* Stat grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
             {[
               { label: "Temperatura", content: <TemperatureBadge temperature={lead.temperature} /> },
               { label: "Score IA",    content: <ScoreBar score={lead.score || 0} temperature={lead.temperature} /> },
-              { label: "Origem",      content: <span style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>{lead.source}</span> },
-              { label: "Nicho",       content: <span style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>{lead.niche || "—"}</span> },
+              { label: "Origem",      content: <span style={{ fontSize: 12, color: "var(--t0)" }}>{lead.source}</span> },
+              { label: "Nicho",       content: <span style={{ fontSize: 12, color: "var(--t0)" }}>{lead.niche || "—"}</span> },
             ].map(({ label, content }) => (
               <div key={label} style={{
-                background: "var(--bg-elevated)", borderRadius: 10, padding: "14px 16px",
-                border: "1px solid var(--border)",
+                background: "var(--s2)",
+                border: "1px solid var(--b0)",
+                borderRadius: 6, padding: "12px 14px",
               }}>
-                <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>
-                  {label}
-                </p>
+                <p className="label" style={{ marginBottom: 8 }}>{label}</p>
                 {content}
               </div>
             ))}
@@ -121,75 +161,60 @@ export function LeadDetailSheet({ lead, onClose }: Props) {
 
           {/* Pain point */}
           <div style={{
-            background: `${accent}10`,
-            border: `1px solid ${accent}30`,
-            borderRadius: 10, padding: "16px",
+            background: `${accent}08`,
+            border: `1px solid ${accent}20`,
+            borderRadius: 6, padding: "14px",
+            marginBottom: 20,
           }}>
-            <p style={{ fontSize: 10, color: accent, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 8 }}>
-              Dor principal
-            </p>
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+            <p className="label" style={{ color: accent, marginBottom: 6 }}>Dor principal</p>
+            <p style={{ fontSize: 13, color: "var(--t1)", lineHeight: 1.6 }}>
               {lead.pain_point || "—"}
             </p>
           </div>
 
           {/* Pitch */}
-          <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>
-                Pitch gerado pela IA
-              </p>
+          <div style={{ marginBottom: 20 }}>
+            <div style={{
+              display: "flex", alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 8,
+            }}>
+              <p className="label">Pitch IA</p>
               <button
                 onClick={copy}
                 style={{
                   display: "flex", alignItems: "center", gap: 5,
-                  fontSize: 11, color: copied ? "var(--green)" : "var(--text-secondary)",
                   background: "none", border: "none", cursor: "pointer",
-                  transition: "color 0.2s",
+                  fontSize: 11,
+                  color: copied ? "var(--a)" : "var(--t2)",
+                  transition: "color 0.15s",
                 }}
               >
-                {copied ? <Check size={12} /> : <Copy size={12} />}
+                {copied ? <Check size={11} /> : <Copy size={11} />}
                 {copied ? "Copiado" : "Copiar"}
               </button>
             </div>
             <div style={{
-              background: "var(--bg-elevated)", border: "1px solid var(--border)",
-              borderRadius: 10, padding: "16px",
-              fontSize: 13, color: "var(--text-secondary)",
-              lineHeight: 1.7, whiteSpace: "pre-wrap",
+              background: "var(--s2)",
+              border: "1px solid var(--b0)",
+              borderRadius: 6, padding: "14px",
+              fontSize: 13, color: "var(--t1)",
+              lineHeight: 1.7,
+              whiteSpace: "pre-wrap" as const,
             }}>
               {lead.pitch || "Aguardando processamento..."}
             </div>
           </div>
 
-          {/* Contact info */}
-          <div style={{
-            background: "var(--bg-elevated)", border: "1px solid var(--border)",
-            borderRadius: 10, padding: "16px",
-          }}>
-            <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 14 }}>
-              Contato
-            </p>
-            {[
-              { icon: Mail,      label: "Email",   value: lead.contact_email },
-              { icon: Building2, label: "Empresa", value: lead.contact_company },
-              { icon: Clock,     label: "Data",    value: new Date(lead.created_at).toLocaleString("pt-BR") },
-            ].map(({ icon: Icon, label, value }) => (
-              <div key={label} style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "8px 0",
-                borderBottom: "1px solid var(--border)",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Icon size={12} color="var(--text-muted)" />
-                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{label}</span>
-                </div>
-                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{value || "—"}</span>
-              </div>
-            ))}
+          {/* Contact */}
+          <div>
+            <p className="label" style={{ marginBottom: 4 }}>Contato</p>
+            <Row label="Email"   value={lead.contact_email} />
+            <Row label="Empresa" value={lead.contact_company} />
+            <Row label="Data"    value={new Date(lead.created_at).toLocaleString("pt-BR")} />
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

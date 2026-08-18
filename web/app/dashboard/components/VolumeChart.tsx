@@ -1,59 +1,75 @@
 "use client";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Legend,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
 } from "recharts";
 
-type Props = { data: { date: string; quente: number; morno: number; frio: number }[] };
+type DataPoint = { date: string; quente: number; morno: number; frio: number };
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string }) {
+function CustomTooltip({ active, payload, label }: {
+  active?: boolean;
+  payload?: { name: string; value: number; color: string }[];
+  label?: string;
+}) {
   if (!active || !payload?.length) return null;
   return (
     <div style={{
-      background: "var(--bg-elevated)",
-      border: "1px solid var(--border-strong)",
-      borderRadius: 10, padding: "10px 14px",
-      fontSize: 12, color: "var(--text-primary)",
+      background: "var(--s2)",
+      border: "1px solid var(--b1)",
+      borderRadius: "var(--r)",
+      padding: "10px 14px",
     }}>
-      <p style={{ color: "var(--text-secondary)", marginBottom: 6, fontSize: 11 }}>{label}</p>
+      <p className="label" style={{ marginBottom: 8 }}>{label}</p>
       {payload.map(p => (
-        <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: p.color, flexShrink: 0 }} />
-          <span style={{ color: "var(--text-secondary)" }}>{p.name}:</span>
-          <span style={{ fontWeight: 500 }}>{p.value}</span>
+        <div key={p.name} style={{
+          display: "flex", alignItems: "center",
+          justifyContent: "space-between", gap: 16,
+          fontSize: 12, marginBottom: 2,
+        }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--t1)" }}>
+            <span style={{ width: 6, height: 2, background: p.color, display: "inline-block" }} />
+            {p.name}
+          </span>
+          <span className="mono" style={{ color: "var(--t0)", fontWeight: 500 }}>{p.value}</span>
         </div>
       ))}
     </div>
   );
 }
 
-export function VolumeChart({ data }: Props) {
+export function VolumeChart({ data }: { data: DataPoint[] }) {
   return (
-    <div className="glass animate-rise s3" style={{ padding: "20px 20px 12px" }}>
-      <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>
-        Volume por temperatura
-      </p>
-      <ResponsiveContainer width="100%" height={180}>
-        <BarChart data={data} barSize={14} barGap={3}>
+    <div className="surface" style={{ padding: "18px 20px 12px" }}>
+      <p className="label" style={{ marginBottom: 16 }}>Volume semanal</p>
+      <ResponsiveContainer width="100%" height={160}>
+        <AreaChart data={data} margin={{ top: 2, right: 0, left: -28, bottom: 0 }}>
+          <defs>
+            {([
+              ["hot",  "var(--hot)"],
+              ["warm", "var(--warm)"],
+              ["cold", "var(--cold)"],
+            ] as const).map(([id, color]) => (
+              <linearGradient key={id} id={`g-${id}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor={color} stopOpacity={0.15} />
+                <stop offset="100%" stopColor={color} stopOpacity={0}    />
+              </linearGradient>
+            ))}
+          </defs>
           <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+            tick={{ fontSize: 10, fill: "var(--t2)" }}
             axisLine={false} tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 10, fill: "var(--text-muted)" }}
-            axisLine={false} tickLine={false} width={24}
+            tick={{ fontSize: 10, fill: "var(--t2)" }}
+            axisLine={false} tickLine={false}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-          <Legend
-            wrapperStyle={{ fontSize: 10, color: "var(--text-secondary)", paddingTop: 8 }}
-            iconSize={6} iconType="circle"
-          />
-          <Bar dataKey="quente" name="Quente" fill="#ff4b4b" radius={[3, 3, 0, 0]} opacity={0.9} />
-          <Bar dataKey="morno"  name="Morno"  fill="#f59e0b" radius={[3, 3, 0, 0]} opacity={0.9} />
-          <Bar dataKey="frio"   name="Frio"   fill="#3b82f6" radius={[3, 3, 0, 0]} opacity={0.9} />
-        </BarChart>
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: "var(--b1)", strokeWidth: 1 }} />
+          <Area dataKey="quente" name="Quente" stroke="var(--hot)"  fill="url(#g-hot)"  strokeWidth={1.5} dot={false} />
+          <Area dataKey="morno"  name="Morno"  stroke="var(--warm)" fill="url(#g-warm)" strokeWidth={1.5} dot={false} />
+          <Area dataKey="frio"   name="Frio"   stroke="var(--cold)" fill="url(#g-cold)" strokeWidth={1.5} dot={false} />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

@@ -1,18 +1,21 @@
 "use client";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 
 type Props = { onClose: () => void; onSuccess: () => void };
 
-const inputStyle: React.CSSProperties = {
+const field: React.CSSProperties = {
   width: "100%",
-  background: "var(--bg-base)",
-  border: "1px solid var(--border-strong)",
-  borderRadius: 8, padding: "9px 12px",
-  fontSize: 13, color: "var(--text-primary)",
+  background: "var(--s2)",
+  border: "1px solid var(--b1)",
+  borderRadius: "var(--r)",
+  padding: "8px 11px",
+  fontSize: 13,
+  color: "var(--t0)",
   outline: "none",
-  transition: "border-color 0.15s",
+  transition: "border-color 0.12s",
 };
 
 function Modal({ onClose, onSuccess }: Props) {
@@ -20,20 +23,24 @@ function Modal({ onClose, onSuccess }: Props) {
   const [form, setForm] = useState({ name: "", email: "", company: "", source: "manual", raw_text: "" });
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", handler);
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", h);
     document.body.style.overflow = "hidden";
-    return () => { document.removeEventListener("keydown", handler); document.body.style.overflow = ""; };
+    return () => { document.removeEventListener("keydown", h); document.body.style.overflow = ""; };
   }, [onClose]);
 
-  async function handleSubmit() {
+  async function submit() {
     if (!form.raw_text || !form.email) return;
     setLoading(true);
     try {
       await fetch("/api/ingest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: form.source, contact: { name: form.name, email: form.email, company: form.company }, raw_text: form.raw_text }),
+        body: JSON.stringify({
+          source: form.source,
+          contact: { name: form.name, email: form.email, company: form.company },
+          raw_text: form.raw_text,
+        }),
       });
       onSuccess();
       onClose();
@@ -44,36 +51,73 @@ function Modal({ onClose, onSuccess }: Props) {
     }
   }
 
+  const disabled = loading || !form.raw_text || !form.email;
+
   return (
-    <div
-      style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(0,0,0,0.6)",
+        backdropFilter: "blur(6px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 24,
+      }}
       onClick={onClose}
     >
-      <div
-        style={{ width: "100%", maxWidth: 520, background: "var(--bg-surface)", border: "1px solid var(--border-strong)", borderRadius: 16, padding: "24px", boxShadow: "0 32px 80px rgba(0,0,0,0.5)", animation: "rise 0.35s cubic-bezier(0.16,1,0.3,1) both" }}
+      <motion.div
+        initial={{ y: 8, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 8, opacity: 0 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          width: "100%", maxWidth: 480,
+          background: "var(--s1)",
+          border: "1px solid var(--b1)",
+          borderRadius: 8,
+          padding: 24,
+        }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Novo lead</p>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", display: "flex" }}>
-            <X size={16} />
+        <div style={{
+          display: "flex", alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 20,
+        }}>
+          <p style={{ fontSize: 13, fontWeight: 500, color: "var(--t0)" }}>Novo lead</p>
+          <button
+            onClick={onClose}
+            style={{
+              width: 24, height: 24,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: "none", border: "1px solid var(--b1)",
+              borderRadius: 4, cursor: "pointer",
+              color: "var(--t2)",
+            }}
+          >
+            <X size={11} />
           </button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {[
-              { key: "name",  label: "Nome",  placeholder: "Ana Souza",        type: "text" },
-              { key: "email", label: "Email", placeholder: "ana@empresa.com",  type: "email" },
+              { key: "name",  label: "Nome",  placeholder: "Ana Souza",       type: "text"  },
+              { key: "email", label: "Email", placeholder: "ana@empresa.com", type: "email" },
             ].map(({ key, label, placeholder, type }) => (
               <div key={key}>
-                <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>{label}</p>
+                <p className="label" style={{ marginBottom: 5 }}>{label}</p>
                 <input
                   type={type}
-                  style={inputStyle}
+                  style={field}
                   placeholder={placeholder}
                   value={form[key as keyof typeof form]}
                   onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                  onFocus={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--b2)"}
+                  onBlur={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--b1)"}
                 />
               </div>
             ))}
@@ -81,13 +125,20 @@ function Modal({ onClose, onSuccess }: Props) {
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div>
-              <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Empresa</p>
-              <input style={inputStyle} placeholder="TechCorp" value={form.company} onChange={e => setForm(f => ({ ...f, company: e.target.value }))} />
+              <p className="label" style={{ marginBottom: 5 }}>Empresa</p>
+              <input
+                style={field}
+                placeholder="TechCorp"
+                value={form.company}
+                onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
+                onFocus={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--b2)"}
+                onBlur={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--b1)"}
+              />
             </div>
             <div>
-              <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Origem</p>
+              <p className="label" style={{ marginBottom: 5 }}>Origem</p>
               <select
-                style={{ ...inputStyle, appearance: "none" as const }}
+                style={{ ...field, cursor: "pointer" }}
                 value={form.source}
                 onChange={e => setForm(f => ({ ...f, source: e.target.value }))}
               >
@@ -99,35 +150,39 @@ function Modal({ onClose, onSuccess }: Props) {
           </div>
 
           <div>
-            <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Texto da interação</p>
+            <p className="label" style={{ marginBottom: 5 }}>Texto da interação</p>
             <textarea
-              style={{ ...inputStyle, resize: "none" as const, lineHeight: 1.6 }}
+              style={{ ...field, resize: "none" as const, lineHeight: 1.6 }}
               rows={5}
               placeholder="Cole aqui o e-mail, transcrição ou mensagem do lead..."
               value={form.raw_text}
               onChange={e => setForm(f => ({ ...f, raw_text: e.target.value }))}
+              onFocus={e => (e.currentTarget as HTMLTextAreaElement).style.borderColor = "var(--b2)"}
+              onBlur={e => (e.currentTarget as HTMLTextAreaElement).style.borderColor = "var(--b1)"}
             />
           </div>
 
           <button
-            onClick={handleSubmit}
-            disabled={loading || !form.raw_text || !form.email}
+            onClick={submit}
+            disabled={disabled}
             style={{
-              width: "100%", padding: "10px",
-              background: loading || !form.raw_text || !form.email ? "var(--bg-elevated)" : "var(--green)",
-              color: loading || !form.raw_text || !form.email ? "var(--text-muted)" : "#09090c",
-              border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600,
-              cursor: loading || !form.raw_text || !form.email ? "not-allowed" : "pointer",
-              transition: "background 0.2s, color 0.2s",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              padding: "9px 0",
+              background: disabled ? "var(--s3)" : "var(--t0)",
+              color: disabled ? "var(--t2)" : "var(--bg)",
+              border: "none",
+              borderRadius: "var(--r)",
+              fontSize: 13, fontWeight: 600,
+              cursor: disabled ? "not-allowed" : "pointer",
+              transition: "background 0.15s, color 0.15s, opacity 0.12s",
             }}
+            onMouseEnter={e => { if (!disabled) (e.currentTarget as HTMLButtonElement).style.opacity = "0.85"; }}
+            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = "1"}
           >
-            {loading && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
-            {loading ? "Enviando para IA..." : "Processar lead"}
+            {loading ? "Enviando..." : "Processar lead"}
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -135,5 +190,10 @@ export function NewLeadForm({ onClose, onSuccess }: Props) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
-  return createPortal(<Modal onClose={onClose} onSuccess={onSuccess} />, document.body);
+  return createPortal(
+    <AnimatePresence>
+      <Modal onClose={onClose} onSuccess={onSuccess} />
+    </AnimatePresence>,
+    document.body,
+  );
 }

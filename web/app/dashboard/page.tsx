@@ -37,23 +37,32 @@ export default async function DashboardPage() {
   const leads     = await getLeads();
   const hot       = leads.filter(l => l.temperature === "QUENTE").length;
   const warm      = leads.filter(l => l.temperature === "MORNO" || l.temperature === "QUENTE").length;
-  const avgScore  = leads.length > 0 ? Math.round(leads.reduce((s, l) => s + (l.score || 0), 0) / leads.length) : 0;
+  const avgScore  = leads.length > 0
+    ? Math.round(leads.reduce((s, l) => s + (l.score || 0), 0) / leads.length)
+    : 0;
   const chartData = buildChartData(leads);
 
   return (
-    <div style={{ minHeight: "100vh", padding: "28px 32px" }}>
-      {/* Background blobs */}
-      <div className="blob" style={{ width: 400, height: 400, background: "rgba(0,214,143,0.04)", top: -100, right: -100 }} />
-      <div className="blob" style={{ width: 300, height: 300, background: "rgba(255,75,75,0.03)", bottom: 100, left: 50, animationDelay: "3s" }} />
-
+    <div style={{ padding: "24px 28px", minHeight: "100vh" }}>
       {/* Header */}
-      <div className="animate-rise" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+      <div style={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        marginBottom: 20,
+      }}>
         <div>
-          <h1 style={{ fontSize: 18, fontWeight: 500, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+          <h1 style={{
+            fontSize: 16,
+            fontWeight: 500,
+            color: "var(--t0)",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.3,
+          }}>
             Revenue Intelligence
           </h1>
-          <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
-            signal-pipeline · {leads.length} leads processados
+          <p style={{ fontSize: 12, color: "var(--t2)", marginTop: 3 }}>
+            {leads.length} leads processados
           </p>
         </div>
         <NewLeadButton />
@@ -62,9 +71,13 @@ export default async function DashboardPage() {
       {/* Metrics */}
       <MetricsBar total={leads.length} hot={hot} avgScore={avgScore} avgTime="1.8s" />
 
-      {/* Charts row */}
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 16 }}>
-        <VolumeChart data={chartData.length > 0 ? chartData : [{ date: "hoje", quente: 0, morno: 0, frio: 0 }]} />
+      {/* Charts */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 8, marginBottom: 8 }}>
+        <VolumeChart
+          data={chartData.length > 0
+            ? chartData
+            : [{ date: "hoje", quente: 0, morno: 0, frio: 0 }]}
+        />
         <FunnelChart total={leads.length} processed={leads.length} warm={warm} hot={hot} />
       </div>
 

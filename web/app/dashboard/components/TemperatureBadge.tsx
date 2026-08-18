@@ -1,21 +1,33 @@
 export type Temperature = "QUENTE" | "MORNO" | "FRIO";
 
-const config: Record<Temperature, { label: string; dot: string; bg: string; color: string }> = {
-  QUENTE: { label: "Quente", dot: "#ff4b4b", bg: "rgba(255,75,75,0.12)",  color: "#ff7070" },
-  MORNO:  { label: "Morno",  dot: "#f59e0b", bg: "rgba(245,158,11,0.12)", color: "#fbbf24" },
-  FRIO:   { label: "Frio",   dot: "#3b82f6", bg: "rgba(59,130,246,0.12)", color: "#60a5fa" },
+const cfg: Record<Temperature, { label: string; color: string; bg: string }> = {
+  QUENTE: { label: "Quente", color: "var(--hot)",  bg: "var(--hot10)"  },
+  MORNO:  { label: "Morno",  color: "var(--warm)", bg: "var(--warm10)" },
+  FRIO:   { label: "Frio",   color: "var(--cold)", bg: "var(--cold10)" },
 };
 
 export function TemperatureBadge({ temperature }: { temperature: Temperature }) {
-  const c = config[temperature] ?? config.FRIO;
+  const c = cfg[temperature] ?? cfg.FRIO;
   return (
     <span style={{
-      display: "inline-flex", alignItems: "center", gap: 5,
-      padding: "3px 9px", borderRadius: 99,
-      background: c.bg, color: c.color,
-      fontSize: 11, fontWeight: 500, letterSpacing: "0.02em",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+      padding: "2px 7px",
+      borderRadius: 4,
+      background: c.bg,
+      color: c.color,
+      fontSize: 11,
+      fontWeight: 500,
+      letterSpacing: "0.01em",
+      whiteSpace: "nowrap" as const,
     }}>
-      <span style={{ width: 5, height: 5, borderRadius: "50%", background: c.dot, flexShrink: 0 }} />
+      <span style={{
+        width: 4, height: 4,
+        borderRadius: "50%",
+        background: c.color,
+        flexShrink: 0,
+      }} />
       {c.label}
     </span>
   );
