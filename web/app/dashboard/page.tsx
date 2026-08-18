@@ -4,24 +4,23 @@ import { LeadTable, Lead } from "./components/LeadTable";
 import { VolumeChart } from "./components/VolumeChart";
 import { FunnelChart } from "./components/FunnelChart";
 import { NewLeadButton } from "./components/NewLeadButton";
+import { PipelineKanban } from "./components/PipelineKanban";
 import pool from "@/lib/db";
 
 async function getLeads(): Promise<Lead[]> {
   noStore();
   try {
-    const result = await pool.query(`
+    const r = await pool.query(`
       SELECT id, raw_text, source, temperature, pitch,
              score, niche, pain_point,
              contact_name, contact_email, contact_company, created_at
       FROM leads ORDER BY created_at DESC LIMIT 100
     `);
-    return result.rows;
-  } catch {
-    return [];
-  }
+    return r.rows;
+  } catch { return []; }
 }
 
-function buildChartData(leads: Lead[]) {
+function buildChart(leads: Lead[]) {
   const days: Record<string, { quente: number; morno: number; frio: number }> = {};
   leads.forEach(l => {
     const d = new Date(l.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
@@ -37,51 +36,49 @@ export default async function DashboardPage() {
   const leads     = await getLeads();
   const hot       = leads.filter(l => l.temperature === "QUENTE").length;
   const warm      = leads.filter(l => l.temperature === "MORNO" || l.temperature === "QUENTE").length;
+  const withPitch = leads.filter(l => !!l.pitch).length;
   const avgScore  = leads.length > 0
     ? Math.round(leads.reduce((s, l) => s + (l.score || 0), 0) / leads.length)
     : 0;
-  const chartData = buildChartData(leads);
+  const chartData = buildChart(leads);
+  const empty     = [{ date: "hoje", quente: 0, morno: 0, frio: 0 }];
 
   return (
-    <div style={{ padding: "24px 28px", minHeight: "100vh" }}>
-      {/* Header */}
+    <div style={{ padding: "24px 28px 40px", minHeight: "100vh" }}>
+
+      {/* Page header */}
       <div style={{
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "space-between",
-        marginBottom: 20,
+        display: "flex", alignItems: "flex-end", justifyContent: "space-between",
+        marginBottom: 22,
       }}>
         <div>
-          <h1 style={{
-            fontSize: 16,
-            fontWeight: 500,
-            color: "var(--t0)",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.3,
+          <h1 className="serif" style={{
+            fontSize: 22, fontWeight: 400,
+            color: "var(--t0)", letterSpacing: "-0.02em",
+            lineHeight: 1.2, marginBottom: 3,
           }}>
             Revenue Intelligence
           </h1>
-          <p style={{ fontSize: 12, color: "var(--t2)", marginTop: 3 }}>
+          <p style={{ fontSize: 11, color: "var(--t2)" }}>
             {leads.length} leads processados
           </p>
         </div>
         <NewLeadButton />
       </div>
 
-      {/* Metrics */}
-      <MetricsBar total={leads.length} hot={hot} avgScore={avgScore} avgTime="1.8s" />
+      {/* Metrics — editorial strip */}
+      <MetricsBar total={leads.length} hot={hot} avgScore={avgScore} withPitch={withPitch} />
 
-      {/* Charts */}
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 8, marginBottom: 8 }}>
-        <VolumeChart
-          data={chartData.length > 0
-            ? chartData
-            : [{ date: "hoje", quente: 0, morno: 0, frio: 0 }]}
-        />
+      {/* Kanban — elemento central */}
+      <PipelineKanban leads={leads} />
+
+      {/* Charts — secondários */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10, marginBottom: 10 }}>
+        <VolumeChart data={chartData.length > 0 ? chartData : empty} />
         <FunnelChart total={leads.length} processed={leads.length} warm={warm} hot={hot} />
       </div>
 
-      {/* Table */}
+      {/* Tabela completa */}
       <LeadTable leads={leads} />
     </div>
   );

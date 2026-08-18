@@ -5,9 +5,9 @@ import { LayoutDashboard, Users, GitBranch, Activity, Settings } from "lucide-re
 
 const nav = [
   { href: "/dashboard",          icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/dashboard/leads",    icon: Users,           label: "Leads" },
-  { href: "/dashboard/pipeline", icon: GitBranch,       label: "Pipeline" },
-  { href: "/dashboard/monitor",  icon: Activity,        label: "Monitor" },
+  { href: "/dashboard/leads",    icon: Users,           label: "Leads"     },
+  { href: "/dashboard/pipeline", icon: GitBranch,       label: "Pipeline"  },
+  { href: "/dashboard/monitor",  icon: Activity,        label: "Monitor"   },
 ];
 
 export function Sidebar() {
@@ -18,24 +18,24 @@ export function Sidebar() {
     return (
       <Link
         href={href}
+        className="transition"
         style={{
-          display: "flex", alignItems: "center", gap: 9,
-          height: 32, padding: "0 10px",
-          borderRadius: 5,
+          display: "flex", alignItems: "center", gap: 8,
+          height: 30, padding: "0 10px",
+          borderRadius: 4,
           fontSize: 13,
           fontWeight: active ? 500 : 400,
           color: active ? "var(--t0)" : "var(--t1)",
-          background: active ? "rgba(0,0,0,0.06)" : "transparent",
+          background: active ? "var(--s3)" : "transparent",
           textDecoration: "none",
-          borderLeft: active ? "2px solid var(--a)" : "2px solid transparent",
+          borderLeft: `2px solid ${active ? "var(--t0)" : "transparent"}`,
           paddingLeft: active ? 8 : 10,
-          transition: "color 0.12s, background 0.12s",
         }}
         onMouseEnter={e => {
           if (!active) {
             const el = e.currentTarget as HTMLAnchorElement;
             el.style.color = "var(--t0)";
-            el.style.background = "rgba(0,0,0,0.04)";
+            el.style.background = "rgba(28,25,23,0.04)";
           }
         }}
         onMouseLeave={e => {
@@ -46,7 +46,7 @@ export function Sidebar() {
           }
         }}
       >
-        <Icon size={14} strokeWidth={1.6} style={{ flexShrink: 0 }} />
+        <Icon size={13} strokeWidth={1.7} style={{ flexShrink: 0 }} />
         {label}
       </Link>
     );
@@ -54,25 +54,25 @@ export function Sidebar() {
 
   return (
     <aside style={{
-      width: 200,
+      width: 196,
       minHeight: "100vh",
       background: "var(--s2)",
       borderRight: "1px solid var(--b0)",
       display: "flex",
       flexDirection: "column",
       flexShrink: 0,
-      padding: "16px 10px",
+      padding: "14px 8px",
     }}>
-      {/* Logo */}
-      <div style={{ padding: "4px 10px 20px", display: "flex", alignItems: "center", gap: 8 }}>
+      {/* Wordmark */}
+      <div style={{ padding: "2px 10px 18px", display: "flex", alignItems: "center", gap: 7 }}>
         <div style={{
-          width: 18, height: 18,
+          width: 16, height: 16,
           background: "var(--t0)",
           borderRadius: 3,
           flexShrink: 0,
         }} />
-        <span style={{
-          fontSize: 13, fontWeight: 600,
+        <span className="serif" style={{
+          fontSize: 15,
           color: "var(--t0)",
           letterSpacing: "-0.01em",
         }}>
@@ -80,22 +80,21 @@ export function Sidebar() {
         </span>
       </div>
 
+      {/* Nav */}
       <div style={{ display: "flex", flexDirection: "column", gap: 1, flex: 1 }}>
         {nav.map(item => <Item key={item.href} {...item} />)}
       </div>
 
-      <div style={{ height: 1, background: "var(--b0)", margin: "10px 2px" }} />
+      <div style={{ height: 1, background: "var(--b0)", margin: "8px 2px" }} />
 
-      <div style={{ marginBottom: 12 }}>
+      <div style={{ marginBottom: 10 }}>
         <Item href="/dashboard/settings" icon={Settings} label="Settings" />
       </div>
 
+      {/* Live indicator */}
       <div style={{ padding: "0 10px", display: "flex", alignItems: "center", gap: 6 }}>
-        <div style={{
-          width: 5, height: 5, borderRadius: "50%",
-          background: "#16A34A", flexShrink: 0,
-        }} />
-        <span style={{ fontSize: 11, color: "var(--t2)" }}>Live</span>
+        <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#16A34A", flexShrink: 0 }} />
+        <span className="label">Live</span>
       </div>
     </aside>
   );

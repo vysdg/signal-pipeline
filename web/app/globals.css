@@ -1,36 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  /* Backgrounds — warm paper tones */
-  --bg:  #F5F2EE;
-  --s1:  #FFFFFF;
-  --s2:  #EEE9E3;
-  --s3:  #E5DFD8;
+  /* ── Superfícies ── */
+  --bg:  #F3F0EA;
+  --s1:  #FDFCFB;
+  --s2:  #EAE6DF;
+  --s3:  #DDD8D0;
 
-  /* Borders */
-  --b0: rgba(0,0,0,0.07);
-  --b1: rgba(0,0,0,0.11);
-  --b2: rgba(0,0,0,0.18);
+  /* ── Bordas ── */
+  --b0: rgba(28,25,23,0.07);
+  --b1: rgba(28,25,23,0.12);
+  --b2: rgba(28,25,23,0.22);
 
-  /* Text */
+  /* ── Texto ── */
   --t0: #1C1917;
   --t1: #78716C;
   --t2: #A8A29E;
 
-  /* Accent — warm brown */
-  --a:    #8C5E38;
-  --a10:  rgba(140,94,56,0.10);
-  --a20:  rgba(140,94,56,0.20);
+  /* ── Temperatura (cor como sinal, não decoração) ── */
+  --hot:    #B91C1C;
+  --hot10:  rgba(185,28,28,0.07);
+  --warm:   #92400E;
+  --warm10: rgba(146,64,14,0.07);
+  --cold:   #1E40AF;
+  --cold10: rgba(30,64,175,0.07);
 
-  /* Status */
-  --hot:    #C53030;
-  --hot10:  rgba(197,48,48,0.08);
-  --warm:   #B45309;
-  --warm10: rgba(180,83,9,0.08);
-  --cold:   #1D4ED8;
-  --cold10: rgba(29,78,216,0.08);
-
-  --r: 6px;
+  --r: 5px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,21 +33,20 @@
 html, body {
   background: var(--bg);
   color: var(--t0);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 13px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--b1); border-radius: 99px; }
 
-.mono {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
-}
+/* ── Utilitários ── */
+.serif { font-family: var(--font-serif), Georgia, serif; }
+.mono  { font-family: var(--font-mono), monospace; font-variant-numeric: tabular-nums; }
 
 .label {
   font-size: 10px;
@@ -67,6 +61,9 @@ html, body {
   border: 1px solid var(--b0);
   border-radius: var(--r);
 }
+
+/* ── Transição padrão ── */
+.transition { transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }

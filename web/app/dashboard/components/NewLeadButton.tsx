@@ -7,20 +7,17 @@ import { useRouter } from "next/navigation";
 export function NewLeadButton() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-
   return (
     <>
       <button
         onClick={() => setOpen(true)}
+        className="transition"
         style={{
-          display: "flex", alignItems: "center", gap: 6,
+          display: "flex", alignItems: "center", gap: 5,
           padding: "6px 12px",
-          background: "var(--t0)",
-          color: "var(--bg)",
+          background: "var(--t0)", color: "var(--bg)",
           border: "none", borderRadius: "var(--r)",
-          fontSize: 12, fontWeight: 600,
-          cursor: "pointer",
-          transition: "opacity 0.12s, transform 0.1s",
+          fontSize: 12, fontWeight: 600, cursor: "pointer",
         }}
         onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = "0.82"}
         onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = "1"}
@@ -30,12 +27,7 @@ export function NewLeadButton() {
         <Plus size={12} strokeWidth={2.5} />
         Novo lead
       </button>
-      {open && (
-        <NewLeadForm
-          onClose={() => setOpen(false)}
-          onSuccess={() => setTimeout(() => router.refresh(), 2000)}
-        />
-      )}
+      {open && <NewLeadForm onClose={() => setOpen(false)} onSuccess={() => setTimeout(() => router.refresh(), 2000)} />}
     </>
   );
 }
