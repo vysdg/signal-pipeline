@@ -5,13 +5,12 @@ type Props = { total: number; processed: number; warm: number; hot: number };
 
 export function FunnelChart({ total, processed, warm, hot }: Props) {
   const [ready, setReady] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setReady(true), 100); return () => clearTimeout(t); }, []);
+  useEffect(() => { const t = setTimeout(() => setReady(true), 120); return () => clearTimeout(t); }, []);
 
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
-
   const stages = [
-    { label: "Ingestão",   n: total,     p: 100,           color: "var(--t2)" },
-    { label: "Processado", n: processed, p: pct(processed), color: "var(--a)"  },
+    { label: "Ingestão",   n: total,     p: 100,           color: "var(--t2)"   },
+    { label: "Processado", n: processed, p: pct(processed), color: "var(--a)"   },
     { label: "Morno+",     n: warm,      p: pct(warm),      color: "var(--warm)" },
     { label: "Quente",     n: hot,       p: pct(hot),       color: "var(--hot)"  },
   ];
@@ -23,10 +22,8 @@ export function FunnelChart({ total, processed, warm, hot }: Props) {
         {stages.map(({ label, n, p, color }) => (
           <div key={label}>
             <div style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              marginBottom: 6,
+              display: "flex", justifyContent: "space-between",
+              alignItems: "baseline", marginBottom: 6,
             }}>
               <span style={{ fontSize: 12, color: "var(--t1)" }}>{label}</span>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
@@ -34,12 +31,7 @@ export function FunnelChart({ total, processed, warm, hot }: Props) {
                 <span className="mono label">{p}%</span>
               </div>
             </div>
-            <div style={{
-              height: 2,
-              background: "var(--b1)",
-              borderRadius: 99,
-              overflow: "hidden",
-            }}>
+            <div style={{ height: 2, background: "var(--b0)", borderRadius: 99, overflow: "hidden" }}>
               <div style={{
                 height: "100%",
                 width: ready ? `${Math.max(p, 1)}%` : "0%",

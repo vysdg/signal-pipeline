@@ -14,10 +14,11 @@ function CustomTooltip({ active, payload, label }: {
   if (!active || !payload?.length) return null;
   return (
     <div style={{
-      background: "var(--s2)",
+      background: "var(--s1)",
       border: "1px solid var(--b1)",
       borderRadius: "var(--r)",
       padding: "10px 14px",
+      boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
     }}>
       <p className="label" style={{ marginBottom: 8 }}>{label}</p>
       {payload.map(p => (
@@ -27,7 +28,7 @@ function CustomTooltip({ active, payload, label }: {
           fontSize: 12, marginBottom: 2,
         }}>
           <span style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--t1)" }}>
-            <span style={{ width: 6, height: 2, background: p.color, display: "inline-block" }} />
+            <span style={{ width: 6, height: 2, background: p.color, display: "inline-block", borderRadius: 1 }} />
             {p.name}
           </span>
           <span className="mono" style={{ color: "var(--t0)", fontWeight: 500 }}>{p.value}</span>
@@ -50,21 +51,14 @@ export function VolumeChart({ data }: { data: DataPoint[] }) {
               ["cold", "var(--cold)"],
             ] as const).map(([id, color]) => (
               <linearGradient key={id} id={`g-${id}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stopColor={color} stopOpacity={0.15} />
+                <stop offset="0%"   stopColor={color} stopOpacity={0.12} />
                 <stop offset="100%" stopColor={color} stopOpacity={0}    />
               </linearGradient>
             ))}
           </defs>
-          <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 10, fill: "var(--t2)" }}
-            axisLine={false} tickLine={false}
-          />
-          <YAxis
-            tick={{ fontSize: 10, fill: "var(--t2)" }}
-            axisLine={false} tickLine={false}
-          />
+          <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.04)" />
+          <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--t2)" }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: "var(--t2)" }} axisLine={false} tickLine={false} />
           <Tooltip content={<CustomTooltip />} cursor={{ stroke: "var(--b1)", strokeWidth: 1 }} />
           <Area dataKey="quente" name="Quente" stroke="var(--hot)"  fill="url(#g-hot)"  strokeWidth={1.5} dot={false} />
           <Area dataKey="morno"  name="Morno"  stroke="var(--warm)" fill="url(#g-warm)" strokeWidth={1.5} dot={false} />

@@ -26,28 +26,28 @@ export function MetricsBar({ total, hot, avgScore, avgTime }: Props) {
   const hotPct = total > 0 ? ((hot / total) * 100).toFixed(1) : "0.0";
 
   const cards = [
-    { label: "Leads capturados", value: total,    sub: `+${Math.max(0, total - 10)} vs ontem`,    isNum: true  },
-    { label: "Score médio",      value: avgScore, sub: "precisão do classificador",               isNum: true  },
-    { label: "Leads quentes",    value: hot,      sub: `${hotPct}% do total`,                     isNum: true  },
-    { label: "Proc. médio",      value: 0,        sub: avgTime,                                   isNum: false },
+    { label: "Leads capturados", main: total,    sub: `+${Math.max(0, total - 10)} vs ontem`, isNum: true  },
+    { label: "Score médio",      main: avgScore, sub: "precisão do classificador",             isNum: true  },
+    { label: "Leads quentes",    main: hot,      sub: `${hotPct}% do total`,                  isNum: true  },
+    { label: "Proc. médio",      main: 0,        sub: avgTime,                                isNum: false },
   ];
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 16 }}>
-      {cards.map(({ label, value, sub, isNum }, i) => (
+      {cards.map(({ label, main, sub, isNum }, i) => (
         <motion.div
           key={label}
           className="surface"
-          style={{ padding: "18px 20px" }}
-          initial={{ opacity: 0, y: 6 }}
+          style={{ padding: "20px 20px 16px" }}
+          initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.28, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
         >
-          <p className="label" style={{ marginBottom: 10 }}>{label}</p>
+          <p className="label" style={{ marginBottom: 12 }}>{label}</p>
           <p
             className="mono"
             style={{
-              fontSize: 30,
+              fontSize: 32,
               fontWeight: 400,
               color: "var(--t0)",
               lineHeight: 1,
@@ -55,7 +55,7 @@ export function MetricsBar({ total, hot, avgScore, avgTime }: Props) {
               marginBottom: 8,
             }}
           >
-            {isNum ? <Counter to={value} /> : sub}
+            {isNum ? <Counter to={main} /> : sub}
           </p>
           {isNum && (
             <p style={{ fontSize: 11, color: "var(--t2)" }}>{sub}</p>

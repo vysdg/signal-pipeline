@@ -1,29 +1,34 @@
 @import "tailwindcss";
 
 :root {
-  --bg:   #0F0F12;
-  --s1:   #141418;
-  --s2:   #1B1B22;
-  --s3:   #22222A;
+  /* Backgrounds — warm paper tones */
+  --bg:  #F5F2EE;
+  --s1:  #FFFFFF;
+  --s2:  #EEE9E3;
+  --s3:  #E5DFD8;
 
-  --b0: rgba(255,255,255,0.05);
-  --b1: rgba(255,255,255,0.09);
-  --b2: rgba(255,255,255,0.15);
+  /* Borders */
+  --b0: rgba(0,0,0,0.07);
+  --b1: rgba(0,0,0,0.11);
+  --b2: rgba(0,0,0,0.18);
 
-  --t0: #ECEDF1;
-  --t1: #7E7E98;
-  --t2: #3E3E52;
+  /* Text */
+  --t0: #1C1917;
+  --t1: #78716C;
+  --t2: #A8A29E;
 
-  --a:    #5B5CF6;
-  --a10:  rgba(91,92,246,0.10);
-  --a20:  rgba(91,92,246,0.20);
+  /* Accent — warm brown */
+  --a:    #8C5E38;
+  --a10:  rgba(140,94,56,0.10);
+  --a20:  rgba(140,94,56,0.20);
 
-  --hot:      #E5484D;
-  --hot10:    rgba(229,72,77,0.10);
-  --warm:     #D97706;
-  --warm10:   rgba(217,119,6,0.10);
-  --cold:     #4B87E8;
-  --cold10:   rgba(75,135,232,0.10);
+  /* Status */
+  --hot:    #C53030;
+  --hot10:  rgba(197,48,48,0.08);
+  --warm:   #B45309;
+  --warm10: rgba(180,83,9,0.08);
+  --cold:   #1D4ED8;
+  --cold10: rgba(29,78,216,0.08);
 
   --r: 6px;
 }
@@ -43,7 +48,6 @@ html, body {
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--b1); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: var(--b2); }
 
 .mono {
   font-variant-numeric: tabular-nums;

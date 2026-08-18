@@ -7,22 +7,16 @@ const clr: Record<string, string> = {
 };
 
 export function ScoreBar({ score, temperature }: Props) {
-  const color = clr[temperature] ?? "var(--cold)";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
       <span className="mono" style={{ fontSize: 12, color: "var(--t0)", width: 20, flexShrink: 0 }}>
         {score}
       </span>
-      <div style={{
-        flex: 1, height: 2,
-        background: "var(--b1)",
-        borderRadius: 99,
-        overflow: "hidden",
-      }}>
+      <div style={{ flex: 1, height: 2, background: "var(--b0)", borderRadius: 99, overflow: "hidden" }}>
         <div style={{
           height: "100%",
           width: `${Math.max(score, 2)}%`,
-          background: color,
+          background: clr[temperature] ?? "var(--cold)",
           borderRadius: 99,
           transition: "width 0.6s cubic-bezier(0.16,1,0.3,1)",
         }} />

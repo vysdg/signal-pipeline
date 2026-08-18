@@ -61,17 +61,17 @@ function Modal({ onClose, onSuccess }: Props) {
       transition={{ duration: 0.15 }}
       style={{
         position: "fixed", inset: 0, zIndex: 9999,
-        background: "rgba(0,0,0,0.6)",
-        backdropFilter: "blur(6px)",
+        background: "rgba(0,0,0,0.2)",
+        backdropFilter: "blur(4px)",
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: 24,
       }}
       onClick={onClose}
     >
       <motion.div
-        initial={{ y: 8, opacity: 0 }}
+        initial={{ y: 6, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 8, opacity: 0 }}
+        exit={{ y: 6, opacity: 0 }}
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         style={{
           width: "100%", maxWidth: 480,
@@ -79,23 +79,18 @@ function Modal({ onClose, onSuccess }: Props) {
           border: "1px solid var(--b1)",
           borderRadius: 8,
           padding: 24,
+          boxShadow: "0 16px 48px rgba(0,0,0,0.10)",
         }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{
-          display: "flex", alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 20,
-        }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <p style={{ fontSize: 13, fontWeight: 500, color: "var(--t0)" }}>Novo lead</p>
           <button
             onClick={onClose}
             style={{
-              width: 24, height: 24,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              background: "none", border: "1px solid var(--b1)",
-              borderRadius: 4, cursor: "pointer",
-              color: "var(--t2)",
+              width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center",
+              background: "none", border: "1px solid var(--b1)", borderRadius: 4,
+              cursor: "pointer", color: "var(--t2)",
             }}
           >
             <X size={11} />
@@ -111,9 +106,7 @@ function Modal({ onClose, onSuccess }: Props) {
               <div key={key}>
                 <p className="label" style={{ marginBottom: 5 }}>{label}</p>
                 <input
-                  type={type}
-                  style={field}
-                  placeholder={placeholder}
+                  type={type} style={field} placeholder={placeholder}
                   value={form[key as keyof typeof form]}
                   onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                   onFocus={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--b2)"}
@@ -126,22 +119,15 @@ function Modal({ onClose, onSuccess }: Props) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div>
               <p className="label" style={{ marginBottom: 5 }}>Empresa</p>
-              <input
-                style={field}
-                placeholder="TechCorp"
-                value={form.company}
+              <input style={field} placeholder="TechCorp" value={form.company}
                 onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
                 onFocus={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--b2)"}
-                onBlur={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--b1)"}
-              />
+                onBlur={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--b1)"} />
             </div>
             <div>
               <p className="label" style={{ marginBottom: 5 }}>Origem</p>
-              <select
-                style={{ ...field, cursor: "pointer" }}
-                value={form.source}
-                onChange={e => setForm(f => ({ ...f, source: e.target.value }))}
-              >
+              <select style={{ ...field, cursor: "pointer" }} value={form.source}
+                onChange={e => setForm(f => ({ ...f, source: e.target.value }))}>
                 <option value="manual">Manual</option>
                 <option value="hubspot">HubSpot</option>
                 <option value="rdstation">RD Station</option>
@@ -152,30 +138,26 @@ function Modal({ onClose, onSuccess }: Props) {
           <div>
             <p className="label" style={{ marginBottom: 5 }}>Texto da interação</p>
             <textarea
-              style={{ ...field, resize: "none" as const, lineHeight: 1.6 }}
-              rows={5}
+              style={{ ...field, resize: "none" as const, lineHeight: 1.6 }} rows={5}
               placeholder="Cole aqui o e-mail, transcrição ou mensagem do lead..."
               value={form.raw_text}
               onChange={e => setForm(f => ({ ...f, raw_text: e.target.value }))}
               onFocus={e => (e.currentTarget as HTMLTextAreaElement).style.borderColor = "var(--b2)"}
-              onBlur={e => (e.currentTarget as HTMLTextAreaElement).style.borderColor = "var(--b1)"}
-            />
+              onBlur={e => (e.currentTarget as HTMLTextAreaElement).style.borderColor = "var(--b1)"} />
           </div>
 
           <button
-            onClick={submit}
-            disabled={disabled}
+            onClick={submit} disabled={disabled}
             style={{
               padding: "9px 0",
               background: disabled ? "var(--s3)" : "var(--t0)",
               color: disabled ? "var(--t2)" : "var(--bg)",
-              border: "none",
-              borderRadius: "var(--r)",
+              border: "none", borderRadius: "var(--r)",
               fontSize: 13, fontWeight: 600,
               cursor: disabled ? "not-allowed" : "pointer",
-              transition: "background 0.15s, color 0.15s, opacity 0.12s",
+              transition: "opacity 0.12s, background 0.15s",
             }}
-            onMouseEnter={e => { if (!disabled) (e.currentTarget as HTMLButtonElement).style.opacity = "0.85"; }}
+            onMouseEnter={e => { if (!disabled) (e.currentTarget as HTMLButtonElement).style.opacity = "0.84"; }}
             onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = "1"}
           >
             {loading ? "Enviando..." : "Processar lead"}
@@ -191,9 +173,7 @@ export function NewLeadForm({ onClose, onSuccess }: Props) {
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
   return createPortal(
-    <AnimatePresence>
-      <Modal onClose={onClose} onSuccess={onSuccess} />
-    </AnimatePresence>,
+    <AnimatePresence><Modal onClose={onClose} onSuccess={onSuccess} /></AnimatePresence>,
     document.body,
   );
 }

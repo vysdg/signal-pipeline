@@ -17,14 +17,12 @@ export function NewLeadButton() {
           padding: "6px 12px",
           background: "var(--t0)",
           color: "var(--bg)",
-          border: "none",
-          borderRadius: "var(--r)",
-          fontSize: 12,
-          fontWeight: 600,
+          border: "none", borderRadius: "var(--r)",
+          fontSize: 12, fontWeight: 600,
           cursor: "pointer",
-          transition: "opacity 0.12s",
+          transition: "opacity 0.12s, transform 0.1s",
         }}
-        onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = "0.85"}
+        onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = "0.82"}
         onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = "1"}
         onMouseDown={e => (e.currentTarget as HTMLButtonElement).style.transform = "scale(0.97)"}
         onMouseUp={e => (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"}

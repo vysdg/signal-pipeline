@@ -18,29 +18,14 @@ const tempColor: Record<string, string> = {
   FRIO:   "var(--cold)",
 };
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: "9px 0",
-      borderBottom: "1px solid var(--b0)",
-    }}>
-      <span className="label">{label}</span>
-      <span style={{ fontSize: 12, color: "var(--t0)" }}>{value || "—"}</span>
-    </div>
-  );
-}
-
 export function LeadDetailSheet({ lead, onClose }: Props) {
   const [copied, setCopied] = useState(false);
   const accent = tempColor[lead.temperature] ?? "var(--t1)";
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
   }, [onClose]);
 
   function copy() {
@@ -57,91 +42,70 @@ export function LeadDetailSheet({ lead, onClose }: Props) {
       transition={{ duration: 0.15 }}
       style={{
         position: "fixed", inset: 0, zIndex: 50,
-        background: "rgba(0,0,0,0.5)",
+        background: "rgba(0,0,0,0.25)",
         backdropFilter: "blur(4px)",
-        display: "flex",
-        justifyContent: "flex-end",
+        display: "flex", justifyContent: "flex-end",
       }}
       onClick={onClose}
     >
       <motion.div
-        initial={{ x: 32, opacity: 0 }}
+        initial={{ x: 24, opacity: 0 }}
         animate={{ x: 0,  opacity: 1 }}
-        exit={{ x: 32, opacity: 0 }}
+        exit={{ x: 24, opacity: 0 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
         style={{
           background: "var(--s1)",
           borderLeft: "1px solid var(--b1)",
-          height: "100%",
-          width: "100%",
-          maxWidth: 420,
-          display: "flex",
-          flexDirection: "column",
+          height: "100%", width: "100%", maxWidth: 420,
+          display: "flex", flexDirection: "column",
+          boxShadow: "-8px 0 32px rgba(0,0,0,0.06)",
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Top accent line */}
+        {/* Accent line */}
         <div style={{ height: 2, background: accent, flexShrink: 0 }} />
 
         {/* Header */}
         <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "16px 20px",
           borderBottom: "1px solid var(--b0)",
           flexShrink: 0,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{
-              width: 32, height: 32,
-              borderRadius: "50%",
+              width: 32, height: 32, borderRadius: "50%",
               border: `1px solid ${accent}40`,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 11, fontWeight: 600,
-              color: accent,
+              fontSize: 11, fontWeight: 600, color: accent,
             }}>
               {initials(lead.contact_name)}
             </div>
             <div>
-              <p style={{ fontSize: 13, fontWeight: 500, color: "var(--t0)" }}>
-                {lead.contact_name || "Lead"}
-              </p>
-              <p style={{ fontSize: 11, color: "var(--t2)" }}>
-                {lead.contact_company || lead.contact_email}
-              </p>
+              <p style={{ fontSize: 13, fontWeight: 500, color: "var(--t0)" }}>{lead.contact_name || "Lead"}</p>
+              <p style={{ fontSize: 11, color: "var(--t2)" }}>{lead.contact_company || lead.contact_email}</p>
             </div>
           </div>
-
           <button
             onClick={onClose}
             style={{
-              width: 26, height: 26,
-              borderRadius: 4,
+              width: 26, height: 26, borderRadius: 4,
               border: "1px solid var(--b1)",
-              background: "transparent",
+              background: "transparent", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer",
-              color: "var(--t2)",
-              transition: "border-color 0.12s, color 0.12s",
+              color: "var(--t2)", transition: "border-color 0.12s, color 0.12s",
             }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--b2)";
-              (e.currentTarget as HTMLButtonElement).style.color = "var(--t0)";
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--b1)";
-              (e.currentTarget as HTMLButtonElement).style.color = "var(--t2)";
-            }}
+            onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = "var(--b2)"; b.style.color = "var(--t0)"; }}
+            onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = "var(--b1)"; b.style.color = "var(--t2)"; }}
           >
             <X size={12} />
           </button>
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: 20 }}>
           {/* Stat grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
             {[
               { label: "Temperatura", content: <TemperatureBadge temperature={lead.temperature} /> },
               { label: "Score IA",    content: <ScoreBar score={lead.score || 0} temperature={lead.temperature} /> },
@@ -149,8 +113,7 @@ export function LeadDetailSheet({ lead, onClose }: Props) {
               { label: "Nicho",       content: <span style={{ fontSize: 12, color: "var(--t0)" }}>{lead.niche || "—"}</span> },
             ].map(({ label, content }) => (
               <div key={label} style={{
-                background: "var(--s2)",
-                border: "1px solid var(--b0)",
+                background: "var(--s2)", border: "1px solid var(--b0)",
                 borderRadius: 6, padding: "12px 14px",
               }}>
                 <p className="label" style={{ marginBottom: 8 }}>{label}</p>
@@ -159,26 +122,18 @@ export function LeadDetailSheet({ lead, onClose }: Props) {
             ))}
           </div>
 
-          {/* Pain point */}
+          {/* Pain */}
           <div style={{
-            background: `${accent}08`,
-            border: `1px solid ${accent}20`,
-            borderRadius: 6, padding: "14px",
-            marginBottom: 20,
+            background: `${accent}08`, border: `1px solid ${accent}22`,
+            borderRadius: 6, padding: 14, marginBottom: 16,
           }}>
             <p className="label" style={{ color: accent, marginBottom: 6 }}>Dor principal</p>
-            <p style={{ fontSize: 13, color: "var(--t1)", lineHeight: 1.6 }}>
-              {lead.pain_point || "—"}
-            </p>
+            <p style={{ fontSize: 13, color: "var(--t1)", lineHeight: 1.6 }}>{lead.pain_point || "—"}</p>
           </div>
 
           {/* Pitch */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{
-              display: "flex", alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 8,
-            }}>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
               <p className="label">Pitch IA</p>
               <button
                 onClick={copy}
@@ -195,23 +150,31 @@ export function LeadDetailSheet({ lead, onClose }: Props) {
               </button>
             </div>
             <div style={{
-              background: "var(--s2)",
-              border: "1px solid var(--b0)",
-              borderRadius: 6, padding: "14px",
-              fontSize: 13, color: "var(--t1)",
-              lineHeight: 1.7,
+              background: "var(--s2)", border: "1px solid var(--b0)",
+              borderRadius: 6, padding: 14,
+              fontSize: 13, color: "var(--t1)", lineHeight: 1.7,
               whiteSpace: "pre-wrap" as const,
             }}>
               {lead.pitch || "Aguardando processamento..."}
             </div>
           </div>
 
-          {/* Contact */}
+          {/* Contact rows */}
           <div>
             <p className="label" style={{ marginBottom: 4 }}>Contato</p>
-            <Row label="Email"   value={lead.contact_email} />
-            <Row label="Empresa" value={lead.contact_company} />
-            <Row label="Data"    value={new Date(lead.created_at).toLocaleString("pt-BR")} />
+            {[
+              { label: "Email",   val: lead.contact_email },
+              { label: "Empresa", val: lead.contact_company },
+              { label: "Data",    val: new Date(lead.created_at).toLocaleString("pt-BR") },
+            ].map(({ label, val }) => (
+              <div key={label} style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "9px 0", borderBottom: "1px solid var(--b0)",
+              }}>
+                <span className="label">{label}</span>
+                <span style={{ fontSize: 12, color: "var(--t0)" }}>{val || "—"}</span>
+              </div>
+            ))}
           </div>
         </div>
       </motion.div>
