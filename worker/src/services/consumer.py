@@ -37,6 +37,10 @@ def process_message(ch, method, properties, body):
         pitch = generate_pitch(cleaned, temperature)
         print(f"[worker] pitch gerado — temperatura: {temperature}", flush=True)
 
+        contact_name    = payload.get("contact", {}).get("name", "")
+        contact_email   = payload.get("contact", {}).get("email", "")
+        contact_company = payload.get("contact", {}).get("company", "")
+
         from src.services.database import save_lead
         save_lead(
             raw_text=cleaned,
@@ -47,10 +51,20 @@ def process_message(ch, method, properties, body):
             score=score,
             niche=niche,
             pain_point=pain_point,
-            contact_name=payload.get("contact", {}).get("name", ""),
-            contact_email=payload.get("contact", {}).get("email", ""),
-            contact_company=payload.get("contact", {}).get("company", ""),
+            contact_name=contact_name,
+            contact_email=contact_email,
+            contact_company=contact_company,
         )
+
+        if temperature == "QUENTE":
+            from src.services.notifier import notify_hot_lead
+            notify_hot_lead(
+                contact_name=contact_name,
+                contact_company=contact_company,
+                score=score,
+                pain_point=pain_point,
+                niche=niche,
+            )
 
         ch.basic_ack(delivery_tag=method.delivery_tag)
         print(f"[worker] lead processado com sucesso!", flush=True)

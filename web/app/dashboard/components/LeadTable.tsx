@@ -68,6 +68,9 @@ export function LeadTable({ leads }: { leads: Lead[] }) {
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [search, setSearch]         = useState("");
   const [selected, setSelected]     = useState<Lead | null>(null);
+  const [page, setPage]             = useState(0);
+
+  const PAGE_SIZE = 25;
 
   const filtered = useMemo(() => {
     const q      = search.toLowerCase().trim();
@@ -79,6 +82,9 @@ export function LeadTable({ leads }: { leads: Lead[] }) {
       return true;
     });
   }, [leads, tempFilter, dateFilter, search]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated  = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
     <>
@@ -118,12 +124,12 @@ export function LeadTable({ leads }: { leads: Lead[] }) {
 
           <div style={{ flex: 1 }} />
 
-          {/* Date filter */}
+          {/* Date filter — reset page when filter changes */}
           <div style={{ display: "flex", gap: 2 }}>
             {DATE_FILTERS.map(df => (
               <button
                 key={df}
-                onClick={() => setDateFilter(df)}
+                onClick={() => { setDateFilter(df); setPage(0); }}
                 className="transition"
                 style={{
                   padding: "3px 9px", borderRadius: 3,
@@ -145,7 +151,7 @@ export function LeadTable({ leads }: { leads: Lead[] }) {
             {TEMP_FILTERS.map(f => (
               <button
                 key={f}
-                onClick={() => setTempFilter(f)}
+                onClick={() => { setTempFilter(f); setPage(0); }}
                 className="transition"
                 style={{
                   padding: "3px 9px", borderRadius: 3,
@@ -198,7 +204,7 @@ export function LeadTable({ leads }: { leads: Lead[] }) {
             </thead>
             <tbody>
               <AnimatePresence mode="popLayout">
-                {filtered.map((lead, i) => {
+                {paginated.map((lead, i) => {
                   const color = clr[lead.temperature];
                   return (
                     <motion.tr
@@ -265,7 +271,7 @@ export function LeadTable({ leads }: { leads: Lead[] }) {
                 })}
               </AnimatePresence>
 
-              {filtered.length === 0 && (
+              {paginated.length === 0 && (
                 <tr>
                   <td colSpan={8} style={{ padding: "40px", textAlign: "center" }}>
                     <p style={{ fontSize: 13, color: "var(--t2)" }}>
@@ -279,12 +285,49 @@ export function LeadTable({ leads }: { leads: Lead[] }) {
         </div>
 
         {filtered.length > 0 && (
-          <div style={{ padding: "9px 16px", borderTop: "1px solid var(--b0)", display: "flex", alignItems: "center", gap: 8 }}>
-            <span className="label">{filtered.length} {filtered.length === 1 ? "lead" : "leads"}</span>
-            {filtered.length < leads.length && (
-              <span className="label" style={{ color: "var(--t2)", fontWeight: 400 }}>
-                de {leads.length} no total
-              </span>
+          <div style={{
+            padding: "9px 16px", borderTop: "1px solid var(--b0)",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span className="label">{filtered.length} {filtered.length === 1 ? "lead" : "leads"}</span>
+              {filtered.length < leads.length && (
+                <span className="label" style={{ color: "var(--t2)", fontWeight: 400 }}>
+                  de {leads.length} no total
+                </span>
+              )}
+            </div>
+
+            {totalPages > 1 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <button
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="transition"
+                  style={{
+                    padding: "3px 8px", borderRadius: 3, border: "1px solid var(--b1)",
+                    background: "transparent", cursor: page === 0 ? "default" : "pointer",
+                    fontSize: 12, color: page === 0 ? "var(--t2)" : "var(--t1)", fontFamily: "inherit",
+                  }}
+                >
+                  ←
+                </button>
+                <span className="label" style={{ padding: "0 6px" }}>
+                  {page + 1} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={page === totalPages - 1}
+                  className="transition"
+                  style={{
+                    padding: "3px 8px", borderRadius: 3, border: "1px solid var(--b1)",
+                    background: "transparent", cursor: page === totalPages - 1 ? "default" : "pointer",
+                    fontSize: 12, color: page === totalPages - 1 ? "var(--t2)" : "var(--t1)", fontFamily: "inherit",
+                  }}
+                >
+                  →
+                </button>
+              </div>
             )}
           </div>
         )}
