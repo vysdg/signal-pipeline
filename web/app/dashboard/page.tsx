@@ -52,9 +52,9 @@ export default async function DashboardPage() {
         marginBottom: 22,
       }}>
         <div>
-          <h1 className="serif" style={{
-            fontSize: 22, fontWeight: 400,
-            color: "var(--t0)", letterSpacing: "-0.02em",
+          <h1 style={{
+            fontSize: 18, fontWeight: 500,
+            color: "var(--t0)", letterSpacing: "-0.01em",
             lineHeight: 1.2, marginBottom: 3,
           }}>
             Revenue Intelligence

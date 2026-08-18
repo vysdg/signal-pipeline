@@ -52,7 +52,7 @@ export function MetricsBar({ total, hot, avgScore, withPitch }: Props) {
           transition={{ duration: 0.3, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
         >
           <p
-            className="serif mono"
+            className="mono"
             style={{
               fontSize: 44,
               fontWeight: 400,

@@ -45,8 +45,7 @@ html, body {
 ::-webkit-scrollbar-thumb { background: var(--b1); border-radius: 99px; }
 
 /* ── Utilitários ── */
-.serif { font-family: var(--font-serif), Georgia, serif; }
-.mono  { font-family: var(--font-mono), monospace; font-variant-numeric: tabular-nums; }
+.mono  { font-family: var(--font-mono), "Courier New", monospace; font-variant-numeric: tabular-nums; }
 
 .label {
   font-size: 10px;

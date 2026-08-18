@@ -71,10 +71,11 @@ export function Sidebar() {
           borderRadius: 3,
           flexShrink: 0,
         }} />
-        <span className="serif" style={{
-          fontSize: 15,
+        <span className="mono" style={{
+          fontSize: 13,
           color: "var(--t0)",
-          letterSpacing: "-0.01em",
+          letterSpacing: "0.01em",
+          fontWeight: 500,
         }}>
           signal
         </span>
