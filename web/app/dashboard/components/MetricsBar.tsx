@@ -52,13 +52,13 @@ export function MetricsBar({ total, hot, avgScore, withPitch }: Props) {
           transition={{ duration: 0.3, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
         >
           <p
-            className="mono"
             style={{
-              fontSize: 44,
+              fontFamily: "var(--font-display), sans-serif",
+              fontSize: 46,
               fontWeight: 400,
               color: "var(--t0)",
               lineHeight: 1,
-              letterSpacing: "-0.02em",
+              letterSpacing: "0.01em",
               marginBottom: 8,
             }}
           >
