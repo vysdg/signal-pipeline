@@ -5,6 +5,7 @@ import { VolumeChart } from "./components/VolumeChart";
 import { FunnelChart } from "./components/FunnelChart";
 import { NewLeadButton } from "./components/NewLeadButton";
 import { PipelineKanban } from "./components/PipelineKanban";
+import { AutoRefresh } from "./components/AutoRefresh";
 import pool from "@/lib/db";
 
 async function getLeads(): Promise<Lead[]> {
@@ -63,7 +64,10 @@ export default async function DashboardPage() {
             {leads.length} leads processados
           </p>
         </div>
-        <NewLeadButton />
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <AutoRefresh intervalMs={30000} />
+          <NewLeadButton />
+        </div>
       </div>
 
       {/* Metrics — editorial strip */}
