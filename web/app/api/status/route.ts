@@ -34,6 +34,9 @@ export async function GET() {
       },
     });
   } catch (err) {
-    return NextResponse.json({ ok: false, db: { status: "error", error: String(err) } }, { status: 503 });
+    // Detalhe fica só no log do servidor — nunca no corpo da resposta
+    // (pode vazar connection string / stack interno do driver pg).
+    console.error("[api/status] erro:", err);
+    return NextResponse.json({ ok: false, db: { status: "error" } }, { status: 503 });
   }
 }

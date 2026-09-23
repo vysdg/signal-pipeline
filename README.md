@@ -1,5 +1,7 @@
 # signal-pipeline
 
+[![CI](https://github.com/vysdg/signal-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/vysdg/signal-pipeline/actions/workflows/ci.yml)
+
 > Pipeline de inteligência de vendas orientada a eventos — processa interações brutas de CRM, classifica intenção de compra com IA e gera pitches personalizados automaticamente.
 
 ![dashboard](./docs/dashboard-preview.png)
@@ -68,7 +70,8 @@ signal-pipeline/
 │   ├── src/
 │   │   ├── routes/       # webhook.ts
 │   │   ├── services/     # publisher.ts (RabbitMQ)
-│   │   ├── middleware/   # validatePayload.ts (Zod)
+│   │   ├── middleware/   # validatePayload.ts (Zod) + verifySignature.ts (HMAC)
+│   │   │   └── __tests__/# Vitest
 │   │   └── types/        # lead.ts
 │   └── Dockerfile
 ├── worker/               # Python — ETL + agentes de IA
@@ -76,6 +79,7 @@ signal-pipeline/
 │   │   ├── etl/          # processor.py (clean, chunk, embed)
 │   │   ├── agents/       # classifier.py + pitcher.py
 │   │   └── services/     # consumer.py + database.py
+│   ├── tests/            # pytest
 │   └── Dockerfile
 ├── web/                  # Next.js — dashboard
 │   └── app/dashboard/
@@ -83,6 +87,7 @@ signal-pipeline/
 │   └── postgres/init.sql # schema + extensão pgvector
 ├── docs/
 │   └── ADR-001-node-python-split.md
+├── .github/workflows/ci.yml  # lint + typecheck + build + testes, nos 3 serviços
 └── docker-compose.yml
 ```
 
@@ -98,7 +103,8 @@ signal-pipeline/
 git clone https://github.com/vysdg/signal-pipeline.git
 cd signal-pipeline
 cp .env.example .env
-# edite o .env e adicione sua OPENAI_API_KEY
+# edite o .env: adicione sua OPENAI_API_KEY e gere um WEBHOOK_SECRET
+#   openssl rand -hex 32
 ```
 
 ### 2. Suba toda a infra
@@ -114,18 +120,28 @@ Isso inicializa:
 - Dashboard Next.js na porta 3001
 
 ### 3. Envie um lead de teste
+
+O webhook exige uma assinatura HMAC-SHA256 do corpo bruto no header
+`X-Signal-Signature` (ver [Segurança](#segurança)) — sem ela, ou com
+`WEBHOOK_SECRET` ausente no `.env`, a API bloqueia o request (fail-closed).
+
 ```bash
+BODY='{
+  "source": "hubspot",
+  "contact": {
+    "name": "Ana Souza",
+    "email": "ana@techcorp.com.br",
+    "company": "TechCorp"
+  },
+  "raw_text": "Oi, vi a demo de vocês na RD Summit. Estamos com uma meta agressiva esse trimestre e precisamos fechar uma ferramenta de qualificação de leads até o fim do mês. Qual o prazo de implementação e existe um plano anual com desconto?"
+}'
+
+SIGNATURE=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | sed 's/^.* //')
+
 curl -X POST http://localhost:3000/api/webhook/lead \
   -H "Content-Type: application/json" \
-  -d '{
-    "source": "hubspot",
-    "contact": {
-      "name": "Ana Souza",
-      "email": "ana@techcorp.com.br",
-      "company": "TechCorp"
-    },
-    "raw_text": "Oi, vi a demo de vocês na RD Summit. Estamos com uma meta agressiva esse trimestre e precisamos fechar uma ferramenta de qualificação de leads até o fim do mês. Qual o prazo de implementação e existe um plano anual com desconto?"
-  }'
+  -H "X-Signal-Signature: $SIGNATURE" \
+  -d "$BODY"
 ```
 
 Resposta esperada:
@@ -142,14 +158,38 @@ http://localhost:3001/dashboard
 
 Documentadas em [`docs/ADR-001-node-python-split.md`](./docs/ADR-001-node-python-split.md)
 
+## Segurança
+
+- **Assinatura HMAC-SHA256 no webhook** (`X-Signal-Signature`, comparação
+  timing-safe via `crypto.timingSafeEqual`) — todo caller externo (CRM) e
+  interno (proxy `web/app/api/ingest`) assina o corpo bruto com
+  `WEBHOOK_SECRET`. **Fail-closed:** se o segredo não estiver configurado no
+  ambiente, 100% dos requests são bloqueados, nunca deixados passar.
+- **Rate limiting** por IP no webhook (60 req/min, `express-rate-limit`).
+- **Validação de payload** com Zod (`validatePayload`), rodando depois da
+  verificação de assinatura.
+- **Headers de segurança** via `helmet` (CSP, `X-Content-Type-Options`, etc).
+- Nenhum segredo commitado — `.env` no `.gitignore`, só `.env.example` versionado.
+
+## Testes e CI
+
+- **API** (`api/src/middleware/__tests__`): Vitest cobrindo `verifySignature`
+  (assinatura válida/ausente/incorreta/de outro payload, e o caminho
+  fail-closed sem `WEBHOOK_SECRET`) e `validatePayload` (schema Zod).
+  Rodar: `cd api && npm test`
+- **Worker** (`worker/tests`): pytest cobrindo `clean_text`/`chunk_text`
+  (ETL puro) e `classify_lead` (parsing de JSON, clamp de score 0-100,
+  fallback em temperatura desconhecida e em JSON malformado — sem chamar a
+  OpenAI de verdade, `chain` é substituído por um dublê).
+  Rodar: `cd worker && pip install -r requirements-dev.txt && pytest`
+- **CI** (`.github/workflows/ci.yml`): a cada push/PR em `main`, três jobs
+  paralelos — `web` (lint + `tsc --noEmit` + build), `api` (`tsc --noEmit` +
+  testes + build) e `worker` (pytest).
+
 ## Melhorias planejadas
 
-- Autenticação JWT no webhook (HMAC signature validation)
-- Endpoint REST para busca semântica por similaridade de leads
-- Testes de integração com Vitest (API) e pytest (worker)
+- Endpoint REST para busca semântica por similaridade de leads (pgvector)
 - Monitoramento com Prometheus + Grafana
-- CI/CD com GitHub Actions
-- Rate limiting por origem no webhook
 
 ## Autor
 

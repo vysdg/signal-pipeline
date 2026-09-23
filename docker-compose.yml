@@ -82,6 +82,7 @@ services:
       dockerfile: Dockerfile
     container_name: signal_web
     restart: unless-stopped
+    env_file: .env
     environment:
       DATABASE_URL: postgresql://signal:signal_secret@postgres:5432/signal_db
       NEXT_PUBLIC_API_URL: http://localhost:3001

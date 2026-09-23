@@ -1,8 +1,17 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+
+// "Mounted" via useSyncExternalStore: no servidor (SSR) retorna false, no
+// cliente retorna true assim que o hidratação roda — sem precisar de um
+// setState síncrono dentro de useEffect (evita mismatch de hidratação e
+// não dispara o lint react-hooks/set-state-in-effect).
+const subscribeNoop = () => () => {};
+function useIsMounted() {
+  return useSyncExternalStore(subscribeNoop, () => true, () => false);
+}
 
 type Props = { onClose: () => void; onSuccess: () => void };
 
@@ -135,8 +144,7 @@ function Modal({ onClose, onSuccess }: Props) {
 }
 
 export function NewLeadForm({ onClose, onSuccess }: Props) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useIsMounted();
   if (!mounted) return null;
   return createPortal(
     <AnimatePresence><Modal onClose={onClose} onSuccess={onSuccess} /></AnimatePresence>,

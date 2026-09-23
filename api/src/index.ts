@@ -11,7 +11,15 @@ const PORT = process.env.PORT ?? 3000;
 
 app.use(helmet());
 app.use(cors());
-app.use(express.json({ limit: "1mb" }));
+app.use(
+  express.json({
+    limit: "1mb",
+    // Guarda o corpo bruto para validação de assinatura HMAC no webhook.
+    verify: (req, _res, buf) => {
+      (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
+    },
+  })
+);
 
 const ingestLimiter = rateLimit({
   windowMs: 60_000,

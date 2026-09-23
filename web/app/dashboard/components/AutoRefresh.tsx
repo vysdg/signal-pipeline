@@ -4,9 +4,8 @@ import { useRouter } from "next/navigation";
 
 export function AutoRefresh({ intervalMs = 30000 }: { intervalMs?: number }) {
   const router = useRouter();
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [countdown, setCountdown]     = useState(intervalMs / 1000);
-  const startRef = useRef<number>(Date.now());
+  const [countdown, setCountdown] = useState(intervalMs / 1000);
+  const startRef = useRef<number>(0);
 
   useEffect(() => {
     startRef.current = Date.now();
@@ -15,7 +14,6 @@ export function AutoRefresh({ intervalMs = 30000 }: { intervalMs?: number }) {
       const remaining = Math.ceil((intervalMs - elapsed) / 1000);
       if (remaining <= 0) {
         router.refresh();
-        setLastRefresh(new Date());
         startRef.current = Date.now();
         setCountdown(intervalMs / 1000);
       } else {
@@ -24,9 +22,6 @@ export function AutoRefresh({ intervalMs = 30000 }: { intervalMs?: number }) {
     }, 1000);
     return () => clearInterval(tick);
   }, [router, intervalMs]);
-
-  const mm = lastRefresh.getHours().toString().padStart(2, "0");
-  const ss = lastRefresh.getMinutes().toString().padStart(2, "0");
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

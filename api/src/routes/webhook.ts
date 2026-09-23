@@ -1,10 +1,11 @@
 import { Router, Request, Response } from "express";
 import { validatePayload } from "../middleware/validatePayload";
+import { verifySignature } from "../middleware/verifySignature";
 import { publishLead } from "../services/publisher";
 
 const router = Router();
 
-router.post("/webhook/lead", validatePayload, async (req: Request, res: Response) => {
+router.post("/webhook/lead", verifySignature, validatePayload, async (req: Request, res: Response) => {
   try {
     await publishLead({
       ...req.body,
