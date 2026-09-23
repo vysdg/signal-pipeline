@@ -1,4 +1,3 @@
-import { unstable_noStore as noStore } from "next/cache";
 import { MetricsBar } from "./components/MetricsBar";
 import { LeadTable, Lead } from "./components/LeadTable";
 import { VolumeChart } from "./components/VolumeChart";
@@ -6,20 +5,7 @@ import { FunnelChart } from "./components/FunnelChart";
 import { NewLeadButton } from "./components/NewLeadButton";
 import { PipelineKanban } from "./components/PipelineKanban";
 import { AutoRefresh } from "./components/AutoRefresh";
-import pool from "@/lib/db";
-
-async function getLeads(): Promise<Lead[]> {
-  noStore();
-  try {
-    const r = await pool.query(`
-      SELECT id, raw_text, source, temperature, pitch,
-             score, niche, pain_point,
-             contact_name, contact_email, contact_company, created_at
-      FROM leads ORDER BY created_at DESC LIMIT 100
-    `);
-    return r.rows;
-  } catch { return []; }
-}
+import { getLeads } from "@/lib/leads";
 
 function buildChart(leads: Lead[]) {
   const days: Record<string, { quente: number; morno: number; frio: number }> = {};

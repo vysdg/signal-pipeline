@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { createSessionToken, SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/auth";
+import { verifyCurrentPassword } from "@/lib/passwordAuth";
 import { isRateLimited, recordAttempt, clearAttempts } from "@/lib/loginRateLimit";
 
 function clientIp(req: NextRequest): string {
@@ -11,13 +11,6 @@ function clientIp(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
-  const password = process.env.DASHBOARD_PASSWORD;
-  if (!password) {
-    // Fail-closed: sem senha configurada, ninguém entra.
-    console.error("[auth] DASHBOARD_PASSWORD não configurado — bloqueando login (fail-closed)");
-    return NextResponse.json({ error: "Login not configured" }, { status: 500 });
-  }
-
   const ip = clientIp(req);
   if (isRateLimited(ip)) {
     return NextResponse.json(
@@ -34,11 +27,11 @@ export async function POST(req: NextRequest) {
   }
 
   const provided = body.password ?? "";
-  const expectedBuf = Buffer.from(password, "utf8");
-  const providedBuf = Buffer.from(provided, "utf8");
-  const valid =
-    expectedBuf.length === providedBuf.length &&
-    crypto.timingSafeEqual(expectedBuf, providedBuf);
+  // Confere primeiro contra a senha trocada no banco (Settings); sem uma
+  // senha trocada, cai no fallback de DASHBOARD_PASSWORD do .env.
+  // Fail-closed: sem nenhuma das duas configuradas, nunca autentica —
+  // ver verifyCurrentPassword em lib/passwordAuth.ts.
+  const valid = await verifyCurrentPassword(provided);
 
   if (!valid) {
     recordAttempt(ip);

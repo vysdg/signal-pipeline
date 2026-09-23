@@ -7,7 +7,7 @@ import { isApiRateLimited } from "@/lib/apiRateLimit";
 // api/src/middleware/verifySignature.ts) nem /login e /api/auth/* (senão
 // ninguém conseguiria logar).
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/leads/:path*", "/api/status"],
+  matcher: ["/dashboard/:path*", "/api/leads/:path*", "/api/status", "/api/settings/:path*"],
 };
 
 function clientIp(req: NextRequest): string {

@@ -166,9 +166,14 @@ Documentadas em [`docs/ADR-001-node-python-split.md`](./docs/ADR-001-node-python
 - **Login no dashboard** — sessão via cookie assinado (HMAC-SHA256 com
   `AUTH_SECRET`, Web Crypto API), `HttpOnly` + `Secure` em produção +
   `SameSite=Lax`, validado em `web/middleware.ts` pra todo `/dashboard/*`,
-  `/api/leads/*` e `/api/status`. Rate limit de 5 tentativas/5min por IP no
-  login. **Fail-closed:** sem `DASHBOARD_PASSWORD`/`AUTH_SECRET` no
-  ambiente, ninguém entra.
+  `/api/leads/*`, `/api/status` e `/api/settings/*`. Rate limit de
+  5 tentativas/5min por IP no login. **Fail-closed:** sem
+  `DASHBOARD_PASSWORD`/`AUTH_SECRET` no ambiente, ninguém entra.
+- **Troca de senha real** (tela de Settings) — sobrescreve
+  `DASHBOARD_PASSWORD` com um hash (scrypt nativo do Node, sem dependência
+  nova) salvo numa linha única em `app_settings` no Postgres. Login e troca
+  de senha checam o banco primeiro; sem senha trocada, cai no fallback do
+  `.env` (`web/lib/passwordAuth.ts`).
 - **Assinatura HMAC-SHA256 no webhook** (`X-Signal-Signature`, comparação
   timing-safe via `crypto.timingSafeEqual`) — todo caller externo (CRM) e
   interno (proxy `web/app/api/ingest`) assina o corpo bruto com
