@@ -64,6 +64,22 @@ html, body {
 /* ── Transição padrão ── */
 .transition { transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s; }
 
+/* ── Nav item (sidebar) ── */
+.nav-item:hover:not(.nav-item--active) {
+  color: var(--t0);
+  background: rgba(28,25,23,0.04);
+}
+.nav-item:focus-visible {
+  outline: 2px solid var(--t0);
+  outline-offset: -2px;
+}
+
+/* ── Focus visível padrão (a11y) ── */
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--t0);
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

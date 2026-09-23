@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { NewLeadForm } from "./NewLeadForm";
 import { useRouter } from "next/navigation";
@@ -9,24 +10,23 @@ export function NewLeadButton() {
   const router = useRouter();
   return (
     <>
-      <button
+      <motion.button
         onClick={() => setOpen(true)}
-        className="transition"
         style={{
           display: "flex", alignItems: "center", gap: 5,
           padding: "6px 12px",
           background: "var(--t0)", color: "var(--bg)",
           border: "none", borderRadius: "var(--r)",
           fontSize: 12, fontWeight: 600, cursor: "pointer",
+          outlineOffset: 2,
         }}
-        onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = "0.82"}
-        onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = "1"}
-        onMouseDown={e => (e.currentTarget as HTMLButtonElement).style.transform = "scale(0.97)"}
-        onMouseUp={e => (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"}
+        whileHover={{ opacity: 0.82 }}
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
       >
         <Plus size={12} strokeWidth={2.5} />
         Novo lead
-      </button>
+      </motion.button>
       {open && <NewLeadForm onClose={() => setOpen(false)} onSuccess={() => setTimeout(() => router.refresh(), 2000)} />}
     </>
   );

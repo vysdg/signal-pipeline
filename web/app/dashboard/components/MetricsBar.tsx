@@ -1,6 +1,24 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+
+function TrendChip({ delta }: { delta: number }) {
+  const up = delta >= 0;
+  const Icon = up ? ArrowUpRight : ArrowDownRight;
+  return (
+    <span
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 2,
+        fontSize: 11, fontWeight: 500,
+        color: up ? "#166534" : "var(--hot)",
+      }}
+    >
+      <Icon size={11} strokeWidth={2.5} />
+      {up ? "+" : ""}{delta}%
+    </span>
+  );
+}
 
 function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
   const [val, setVal] = useState(0);
@@ -25,11 +43,14 @@ type Props = { total: number; hot: number; avgScore: number; withPitch: number }
 export function MetricsBar({ total, hot, avgScore, withPitch }: Props) {
   const hotPct = total > 0 ? Math.round((hot / total) * 100) : 0;
 
+  const pitchPct = total > 0 ? Math.round((withPitch / total) * 100) : 0;
+  const deltaPct = total > 0 ? Math.round((Math.max(0, total - 10) / total) * 100) : 0;
+
   const metrics = [
-    { value: total,     label: "Leads capturados",  sub: `+${Math.max(0, total - 10)} vs ontem`, isNum: true  },
-    { value: avgScore,  label: "Score médio IA",     sub: "precisão do classificador",            isNum: true  },
-    { value: hot,       label: "Leads quentes",      sub: `${hotPct}% do total`,                  isNum: true  },
-    { value: withPitch, label: "Com pitch gerado",   sub: `${total > 0 ? Math.round((withPitch/total)*100) : 0}% do total`, isNum: true },
+    { value: total,     label: "Leads capturados",  sub: "vs ontem",                 chip: deltaPct, isNum: true },
+    { value: avgScore,  label: "Score médio IA",     sub: "precisão do classificador", chip: null,     isNum: true },
+    { value: hot,       label: "Leads quentes",      sub: "do total",                 chip: hotPct,   isNum: true },
+    { value: withPitch, label: "Com pitch gerado",   sub: "do total",                 chip: pitchPct, isNum: true },
   ];
 
   return (
@@ -40,7 +61,7 @@ export function MetricsBar({ total, hot, avgScore, withPitch }: Props) {
       borderBottom: "1px solid var(--b0)",
       marginBottom: 28,
     }}>
-      {metrics.map(({ value, label, sub, isNum }, i) => (
+      {metrics.map(({ value, label, sub, chip, isNum }, i) => (
         <motion.div
           key={label}
           style={{
@@ -65,7 +86,10 @@ export function MetricsBar({ total, hot, avgScore, withPitch }: Props) {
             {isNum ? <Counter to={value} /> : value}
           </p>
           <p className="label" style={{ marginBottom: 3 }}>{label}</p>
-          <p style={{ fontSize: 11, color: "var(--t2)" }}>{sub}</p>
+          <p style={{ fontSize: 11, color: "var(--t2)", display: "flex", alignItems: "center", gap: 5 }}>
+            {chip !== null && <TrendChip delta={chip} />}
+            {sub}
+          </p>
         </motion.div>
       ))}
     </div>

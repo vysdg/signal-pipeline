@@ -95,11 +95,16 @@ function DraggableCard({ lead, onClick }: { lead: Lead; onClick: () => void }) {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.97 }}
-        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         onClick={onClick}
         className="surface transition"
         style={{ padding: "12px 14px", cursor: "grab", userSelect: "none" as const }}
-        whileHover={{ backgroundColor: "var(--s2)" } as never}
+        whileHover={{
+          backgroundColor: "var(--s2)",
+          y: -2,
+          boxShadow: "0 6px 16px rgba(28,25,23,0.08)",
+        } as never}
+        whileTap={{ scale: 0.98, cursor: "grabbing" } as never}
+        transition={{ type: "spring", stiffness: 350, damping: 26 }}
       >
         <CardContent lead={lead} />
       </motion.div>

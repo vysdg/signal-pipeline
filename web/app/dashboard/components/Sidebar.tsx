@@ -10,48 +10,33 @@ const nav = [
   { href: "/dashboard/monitor",  icon: Activity,        label: "Monitor"   },
 ];
 
-export function Sidebar() {
+function NavItem({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
   const path = usePathname();
+  const active = path === href || (href !== "/dashboard" && path.startsWith(href));
+  return (
+    <Link
+      href={href}
+      className={`nav-item transition${active ? " nav-item--active" : ""}`}
+      style={{
+        display: "flex", alignItems: "center", gap: 8,
+        height: 30, padding: "0 10px",
+        borderRadius: 4,
+        fontSize: 13,
+        fontWeight: active ? 500 : 400,
+        color: active ? "var(--t0)" : "var(--t1)",
+        background: active ? "var(--s3)" : "transparent",
+        textDecoration: "none",
+        borderLeft: `2px solid ${active ? "var(--t0)" : "transparent"}`,
+        paddingLeft: active ? 8 : 10,
+      }}
+    >
+      <Icon size={13} strokeWidth={1.7} style={{ flexShrink: 0 }} />
+      {label}
+    </Link>
+  );
+}
 
-  function Item({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
-    const active = path === href || (href !== "/dashboard" && path.startsWith(href));
-    return (
-      <Link
-        href={href}
-        className="transition"
-        style={{
-          display: "flex", alignItems: "center", gap: 8,
-          height: 30, padding: "0 10px",
-          borderRadius: 4,
-          fontSize: 13,
-          fontWeight: active ? 500 : 400,
-          color: active ? "var(--t0)" : "var(--t1)",
-          background: active ? "var(--s3)" : "transparent",
-          textDecoration: "none",
-          borderLeft: `2px solid ${active ? "var(--t0)" : "transparent"}`,
-          paddingLeft: active ? 8 : 10,
-        }}
-        onMouseEnter={e => {
-          if (!active) {
-            const el = e.currentTarget as HTMLAnchorElement;
-            el.style.color = "var(--t0)";
-            el.style.background = "rgba(28,25,23,0.04)";
-          }
-        }}
-        onMouseLeave={e => {
-          if (!active) {
-            const el = e.currentTarget as HTMLAnchorElement;
-            el.style.color = "var(--t1)";
-            el.style.background = "transparent";
-          }
-        }}
-      >
-        <Icon size={13} strokeWidth={1.7} style={{ flexShrink: 0 }} />
-        {label}
-      </Link>
-    );
-  }
-
+export function Sidebar() {
   return (
     <aside style={{
       width: 196,
@@ -83,13 +68,13 @@ export function Sidebar() {
 
       {/* Nav */}
       <div style={{ display: "flex", flexDirection: "column", gap: 1, flex: 1 }}>
-        {nav.map(item => <Item key={item.href} {...item} />)}
+        {nav.map(item => <NavItem key={item.href} {...item} />)}
       </div>
 
       <div style={{ height: 1, background: "var(--b0)", margin: "8px 2px" }} />
 
       <div style={{ marginBottom: 10 }}>
-        <Item href="/dashboard/settings" icon={Settings} label="Settings" />
+        <NavItem href="/dashboard/settings" icon={Settings} label="Settings" />
       </div>
 
       {/* Live indicator */}
