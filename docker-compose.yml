@@ -1,3 +1,10 @@
+# ⚠️ Este compose é para desenvolvimento local. As portas de Postgres (5432)
+# e RabbitMQ (5672 + 15672/management UI) abaixo ficam expostas no host com
+# as credenciais literais definidas aqui ("signal_secret") — nunca rode
+# isso num servidor acessível pela internet sem trocar as senhas e, de
+# preferência, remover esses mapeamentos de porta (só a rede interna do
+# compose precisa deles; api/worker/web já falam com postgres/rabbitmq
+# pelo nome do serviço na rede signal_net).
 services:
   postgres:
     image: pgvector/pgvector:pg16

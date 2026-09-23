@@ -174,10 +174,23 @@ Documentadas em [`docs/ADR-001-node-python-split.md`](./docs/ADR-001-node-python
   interno (proxy `web/app/api/ingest`) assina o corpo bruto com
   `WEBHOOK_SECRET`. **Fail-closed:** se o segredo não estiver configurado no
   ambiente, 100% dos requests são bloqueados, nunca deixados passar.
-- **Rate limiting** por IP no webhook (60 req/min, `express-rate-limit`).
+  Contrato completo documentado em [`api/openapi.yaml`](./api/openapi.yaml).
+- **Rate limiting** por IP no webhook (60 req/min, `express-rate-limit`) e
+  nas rotas do dashboard (`/api/leads`, `/api/status`, 120 req/min —
+  `web/middleware.ts`).
 - **Validação de payload** com Zod (`validatePayload`), rodando depois da
   verificação de assinatura.
-- **Headers de segurança** via `helmet` (CSP, `X-Content-Type-Options`, etc).
+- **Headers de segurança** via `helmet` na API (CSP, `X-Content-Type-Options`
+  etc) e via `next.config.ts` no dashboard (CSP, `X-Frame-Options: DENY`,
+  `Permissions-Policy`, etc — antes só a API tinha).
+- **CORS restrito por padrão na API** — `ALLOWED_ORIGINS` vazio bloqueia
+  qualquer origem de browser; só faz sentido preencher se um cliente
+  browser precisar chamar a API diretamente (hoje só webhook server-to-server).
+- **Proteção contra CSV/Formula Injection** na exportação de leads
+  (`web/app/dashboard/components/LeadTable.tsx`) — células que começam com
+  `=`, `+`, `-` ou `@` (gatilho de fórmula em Excel/Sheets) são prefixadas
+  com apóstrofo antes de virar CSV. Relevante porque `niche`/`pain_point`
+  vêm de classificação por IA sobre texto de terceiros.
 - **Mitigação de prompt injection** (OWASP LLM01:2025) — o texto do lead
   (dado externo, via webhook) é embrulhado num delimitador explícito no
   prompt do `classifier` e do `pitcher`, com instrução clara de que é dado
@@ -199,7 +212,17 @@ Documentadas em [`docs/ADR-001-node-python-split.md`](./docs/ADR-001-node-python
   `lead.ingest` com argumentos diferentes — apague o volume do RabbitMQ
   (`docker compose down -v`) ou a fila pela UI de management (`:15672`)
   antes de subir de novo.
+- **Dependências em dia** — `npm audit` (web e api) e `pip-audit` (worker)
+  em 0 vulnerabilidades conhecidas, incluindo a migração do LangChain
+  0.3→1.x (só mudou um import, `langchain.prompts` → `langchain_core.prompts`
+  — nosso uso é mínimo, sem agents/chains/memory legados).
 - Nenhum segredo commitado — `.env` no `.gitignore`, só `.env.example` versionado.
+- Visibilidade básica de uso da OpenAI via log (`worker/src/services/consumer.py`)
+  — não substitui um teto de gasto real, configure em
+  [platform.openai.com/settings/organization/limits](https://platform.openai.com/settings/organization/limits).
+- Postgres e RabbitMQ (+ UI de management) ficam expostos no host só para
+  desenvolvimento local — nunca exponha essas portas publicamente sem trocar
+  as credenciais (ver aviso no topo do `docker-compose.yml`).
 
 ## Testes e CI
 
@@ -222,6 +245,16 @@ Documentadas em [`docs/ADR-001-node-python-split.md`](./docs/ADR-001-node-python
 
 - Endpoint REST para busca semântica por similaridade de leads (pgvector)
 - Monitoramento com Prometheus + Grafana
+- CSP baseada em nonce no dashboard (hoje usa `unsafe-inline` pro payload
+  de hidratação do Next.js — funcional e documentado, mas uma CSP mais
+  restrita é possível com mais trabalho de infra)
+- `trust proxy` no Express (`api/src/index.ts`) — não configurado de
+  propósito, porque não há reverse proxy na frente hoje; configurar antes
+  de colocar um (nginx, Cloudflare, Tailscale funnel) na frente da API
+
+## Licença
+
+[MIT](./LICENSE)
 
 ## Autor
 

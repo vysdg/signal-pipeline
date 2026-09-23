@@ -15,6 +15,19 @@ QUEUE_NAME = "lead.ingest"
 DLX_NAME = "lead.ingest.dlx"
 DLQ_NAME = "lead.ingest.dlq"
 
+# Visibilidade básica de uso da OpenAI — não substitui um teto de gasto de
+# verdade (configure em platform.openai.com/settings/organization/limits),
+# só dá pra ver no log quantas chamadas foram feitas desde que o worker
+# subiu, sem precisar de infra extra (Prometheus etc, ver README).
+_openai_calls = 0
+
+
+def _log_openai_call(kind: str) -> None:
+    global _openai_calls
+    _openai_calls += 1
+    print(f"[worker] chamada OpenAI ({kind}) — total desde o start: {_openai_calls}", flush=True)
+
+
 def process_message(ch, method, properties, body):
     print("[worker] mensagem recebida!", flush=True)
     try:
@@ -31,10 +44,12 @@ def process_message(ch, method, properties, body):
         # a parte mais relevante pra similaridade semântica.
         chunks = chunk_text(cleaned)
         embedding = generate_embedding(chunks[0] if chunks else cleaned)
+        _log_openai_call("embedding")
         print(f"[worker] embedding gerado, len: {len(embedding)}", flush=True)
 
         from src.agents.classifier import classify_lead
         result = classify_lead(cleaned)
+        _log_openai_call("classifier")
         print(f"[worker] classificação: {result}", flush=True)
 
         # suporta dict ou string
@@ -49,6 +64,7 @@ def process_message(ch, method, properties, body):
 
         from src.agents.pitcher import generate_pitch
         pitch = generate_pitch(cleaned, temperature)
+        _log_openai_call("pitcher")
         print(f"[worker] pitch gerado — temperatura: {temperature}", flush=True)
 
         contact_name    = payload.get("contact", {}).get("name", "")

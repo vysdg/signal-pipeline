@@ -32,17 +32,28 @@ function initials(name: string) {
 
 const clr: Record<Temperature, string> = { QUENTE: "var(--hot)", MORNO: "var(--warm)", FRIO: "var(--cold)" };
 
+// OWASP CSV Injection: se uma célula abre com =, +, -, @, tab ou CR,
+// planilhas (Excel etc) interpretam como fórmula ao abrir o arquivo.
+// niche/pain_point/pitch vêm de classificação por IA sobre texto de
+// terceiros (webhook) — um lead malicioso pode plantar uma fórmula.
+// Prefixa com apóstrofo pra neutralizar, sem alterar o valor visível.
+const CSV_FORMULA_TRIGGER = /^[=+\-@\t\r]/;
+function csvCell(value: string): string {
+  const safe = CSV_FORMULA_TRIGGER.test(value) ? `'${value}` : value;
+  return `"${safe.replace(/"/g, '""')}"`;
+}
+
 function exportCSV(leads: Lead[]) {
   const headers = ["Nome", "Email", "Empresa", "Origem", "Temperatura", "Score", "Nicho", "Dor principal", "Data"];
   const rows = leads.map(l => [
-    `"${(l.contact_name || "").replace(/"/g, '""')}"`,
-    `"${(l.contact_email || "").replace(/"/g, '""')}"`,
-    `"${(l.contact_company || "").replace(/"/g, '""')}"`,
+    csvCell(l.contact_name || ""),
+    csvCell(l.contact_email || ""),
+    csvCell(l.contact_company || ""),
     l.source,
     l.temperature,
     l.score ?? 0,
-    `"${(l.niche || "").replace(/"/g, '""')}"`,
-    `"${(l.pain_point || "").replace(/"/g, '""')}"`,
+    csvCell(l.niche || ""),
+    csvCell(l.pain_point || ""),
     new Date(l.created_at).toLocaleDateString("pt-BR"),
   ]);
   const csv = [headers, ...rows].map(r => r.join(",")).join("\n");

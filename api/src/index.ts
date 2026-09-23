@@ -10,7 +10,13 @@ const app = express();
 const PORT = process.env.PORT ?? 3000;
 
 app.use(helmet());
-app.use(cors());
+// Esta API só é chamada server-to-server (CRM externo assinando com HMAC,
+// ou o proxy interno em web/app/api/ingest) — nenhum browser bate aqui
+// direto. Por padrão (ALLOWED_ORIGINS ausente) libera nenhuma origem de
+// browser; defina ALLOWED_ORIGINS (lista separada por vírgula) só se um
+// cliente browser precisar chamar esta API diretamente no futuro.
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map(o => o.trim()).filter(Boolean) ?? [];
+app.use(cors({ origin: allowedOrigins }));
 app.use(
   express.json({
     limit: "1mb",

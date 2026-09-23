@@ -1,0 +1,161 @@
+openapi: 3.1.0
+info:
+  title: signal-pipeline — webhook API
+  description: >
+    Recebe leads de CRMs externos (ou do proxy interno do dashboard) e
+    publica na fila lead.ingest para processamento assíncrono pelo worker.
+    Todo request precisa de uma assinatura HMAC-SHA256 válida — ver a seção
+    de segurança.
+  version: "1.0.0"
+  license:
+    name: MIT
+    url: https://github.com/vysdg/signal-pipeline/blob/main/LICENSE
+servers:
+  - url: http://localhost:3000
+    description: Desenvolvimento local (docker compose)
+
+tags:
+  - name: webhook
+    description: Ingestão de leads
+  - name: health
+    description: Verificação de saúde do serviço
+
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: Verifica se a API está de pé
+      security: []
+      responses:
+        "200":
+          description: Serviço saudável
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  service: { type: string, example: signal-api }
+
+  /api/webhook/lead:
+    post:
+      tags: [webhook]
+      summary: Ingere um lead e publica na fila de processamento
+      description: >
+        Valida a assinatura HMAC (ver `HmacSignature` em `security`), depois
+        o schema do corpo (Zod). Se ambos passarem, publica a mensagem em
+        RabbitMQ (fila `lead.ingest`, durável, com dead-letter configurado)
+        e responde 202 sem esperar o processamento pelo worker terminar —
+        a ingestão é assíncrona.
+      security:
+        - HmacSignature: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LeadIngest"
+            examples:
+              hubspot:
+                value:
+                  source: hubspot
+                  contact:
+                    name: Ana Souza
+                    email: ana@techcorp.com.br
+                    company: TechCorp
+                  raw_text: >-
+                    Oi, vi a demo de vocês na RD Summit. Estamos com uma
+                    meta agressiva esse trimestre e precisamos fechar uma
+                    ferramenta de qualificação de leads até o fim do mês.
+                    Qual o prazo de implementação e existe um plano anual
+                    com desconto?
+      responses:
+        "202":
+          description: Lead aceito e enfileirado para processamento
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: queued }
+                  message:
+                    type: string
+                    example: Lead accepted and queued for processing
+        "401":
+          description: Assinatura ausente ou inválida
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: Payload não passou na validação do schema
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string, example: Invalid payload }
+                  details:
+                    type: array
+                    items: { type: object }
+        "429":
+          description: Rate limit excedido (60 req/min por IP)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500":
+          description: >
+            Webhook não configurado (WEBHOOK_SECRET ausente no ambiente —
+            fail-closed, nenhum request passa) ou erro ao publicar na fila
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+components:
+  securitySchemes:
+    HmacSignature:
+      type: apiKey
+      in: header
+      name: X-Signal-Signature
+      description: >
+        hex(HMAC-SHA256(corpo_bruto_da_requisição, WEBHOOK_SECRET)).
+        Comparado com crypto.timingSafeEqual. Fail-closed: sem
+        WEBHOOK_SECRET configurado no ambiente da API, todo request é
+        bloqueado, independente da assinatura enviada.
+
+        Exemplo (bash):
+        ```
+        SIGNATURE=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | sed 's/^.* //')
+        ```
+
+  schemas:
+    LeadIngest:
+      type: object
+      required: [source, contact, raw_text]
+      properties:
+        source:
+          type: string
+          enum: [hubspot, rdstation, manual]
+        contact:
+          type: object
+          required: [name, email]
+          properties:
+            name: { type: string, minLength: 1 }
+            email: { type: string, format: email }
+            company: { type: string }
+        raw_text:
+          type: string
+          minLength: 10
+          maxLength: 50000
+          description: Texto bruto da interação com o lead (e-mail, transcrição, mensagem).
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Campos livres opcionais, repassados sem uso pelo pipeline hoje.
+
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+
+security:
+  - HmacSignature: []

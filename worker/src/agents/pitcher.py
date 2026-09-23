@@ -1,5 +1,5 @@
 from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from src.security import TAG_OPEN, TAG_CLOSE, sanitize_untrusted_text, sanitize_llm_output
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
