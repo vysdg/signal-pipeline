@@ -49,3 +49,14 @@ def test_generate_pitch_passes_temperature_through(monkeypatch):
     generate_pitch("texto normal", "FRIO")
 
     assert fake.last_payload["temperature"] == "FRIO"
+
+
+def test_generate_pitch_strips_url_even_if_model_ignores_the_instruction(monkeypatch):
+    # Defesa em profundidade: mesmo que o modelo ignore a instrução do
+    # prompt e inclua um link na saída, o pitch final não deve conter URL.
+    fake = _FakeChain("Olá! Agende aqui: https://evil.example/phish")
+    monkeypatch.setattr(pitcher_module, "chain", fake)
+
+    result = generate_pitch("texto normal", "QUENTE")
+
+    assert "https://evil.example" not in result

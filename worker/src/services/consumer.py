@@ -7,16 +7,30 @@ import traceback
 print("[consumer] carregando módulo...", flush=True)
 
 QUEUE_NAME = "lead.ingest"
+# Dead-letter: mensagens que este worker nack (requeue=False) — erro na
+# classificação, embedding, banco fora do ar, etc — vão pra cá em vez de
+# serem descartadas pra sempre. Precisa bater exatamente com os argumentos
+# declarados em api/src/services/publisher.ts (RabbitMQ rejeita redeclarar
+# uma fila já existente com argumentos diferentes).
+DLX_NAME = "lead.ingest.dlx"
+DLQ_NAME = "lead.ingest.dlq"
 
 def process_message(ch, method, properties, body):
     print("[worker] mensagem recebida!", flush=True)
     try:
         payload = json.loads(body)
 
-        from src.etl.processor import clean_text, generate_embedding
+        from src.etl.processor import clean_text, chunk_text, generate_embedding
         raw_text = payload["raw_text"]
         cleaned = clean_text(raw_text)
-        embedding = generate_embedding(cleaned)
+        # raw_text aceita até 50.000 caracteres (schema Zod da API), mas
+        # text-embedding-3-small tem limite de ~8191 tokens de entrada.
+        # Sem chunk_text aqui, um lead grande estourava o limite, a
+        # chamada à OpenAI falhava, e a mensagem era perdida (nack sem
+        # requeue). Embeda só o primeiro chunk — é o início da interação,
+        # a parte mais relevante pra similaridade semântica.
+        chunks = chunk_text(cleaned)
+        embedding = generate_embedding(chunks[0] if chunks else cleaned)
         print(f"[worker] embedding gerado, len: {len(embedding)}", flush=True)
 
         from src.agents.classifier import classify_lead
@@ -80,7 +94,16 @@ def start_consumer():
     params.socket_timeout = 10
     connection = pika.BlockingConnection(params)
     channel = connection.channel()
-    channel.queue_declare(queue=QUEUE_NAME, durable=True)
+
+    channel.exchange_declare(exchange=DLX_NAME, exchange_type="fanout", durable=True)
+    channel.queue_declare(queue=DLQ_NAME, durable=True)
+    channel.queue_bind(queue=DLQ_NAME, exchange=DLX_NAME)
+
+    channel.queue_declare(
+        queue=QUEUE_NAME,
+        durable=True,
+        arguments={"x-dead-letter-exchange": DLX_NAME},
+    )
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue=QUEUE_NAME, on_message_callback=process_message)
     print(f"[worker] aguardando mensagens na fila '{QUEUE_NAME}'...", flush=True)

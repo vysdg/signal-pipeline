@@ -103,8 +103,8 @@ signal-pipeline/
 git clone https://github.com/vysdg/signal-pipeline.git
 cd signal-pipeline
 cp .env.example .env
-# edite o .env: adicione sua OPENAI_API_KEY e gere um WEBHOOK_SECRET
-#   openssl rand -hex 32
+# edite o .env: adicione sua OPENAI_API_KEY e gere WEBHOOK_SECRET, AUTH_SECRET
+# (openssl rand -hex 32) e uma DASHBOARD_PASSWORD forte
 ```
 
 ### 2. Suba toda a infra
@@ -153,6 +153,9 @@ Resposta esperada:
 ```
 http://localhost:3001/dashboard
 ```
+Redireciona pra uma tela de login — entre com a `DASHBOARD_PASSWORD` que
+você definiu no `.env`. O app é single-tenant (uma senha compartilhada, sem
+conta por usuário); sessão dura 12h via cookie assinado (`HttpOnly`).
 
 ## Decisões de arquitetura
 
@@ -160,6 +163,12 @@ Documentadas em [`docs/ADR-001-node-python-split.md`](./docs/ADR-001-node-python
 
 ## Segurança
 
+- **Login no dashboard** — sessão via cookie assinado (HMAC-SHA256 com
+  `AUTH_SECRET`, Web Crypto API), `HttpOnly` + `Secure` em produção +
+  `SameSite=Lax`, validado em `web/middleware.ts` pra todo `/dashboard/*`,
+  `/api/leads/*` e `/api/status`. Rate limit de 5 tentativas/5min por IP no
+  login. **Fail-closed:** sem `DASHBOARD_PASSWORD`/`AUTH_SECRET` no
+  ambiente, ninguém entra.
 - **Assinatura HMAC-SHA256 no webhook** (`X-Signal-Signature`, comparação
   timing-safe via `crypto.timingSafeEqual`) — todo caller externo (CRM) e
   interno (proxy `web/app/api/ingest`) assina o corpo bruto com
@@ -169,6 +178,27 @@ Documentadas em [`docs/ADR-001-node-python-split.md`](./docs/ADR-001-node-python
 - **Validação de payload** com Zod (`validatePayload`), rodando depois da
   verificação de assinatura.
 - **Headers de segurança** via `helmet` (CSP, `X-Content-Type-Options`, etc).
+- **Mitigação de prompt injection** (OWASP LLM01:2025) — o texto do lead
+  (dado externo, via webhook) é embrulhado num delimitador explícito no
+  prompt do `classifier` e do `pitcher`, com instrução clara de que é dado
+  e não comando; tentativas de forjar o próprio delimitador dentro do texto
+  são removidas antes (`worker/src/security.py`).
+- **Saída do LLM nunca é confiada cegamente** (OWASP LLM05:2025) — o
+  `pitcher` (que gera o e-mail que um vendedor copia e envia de verdade)
+  tem uma segunda camada de validação sobre a resposta do modelo: remove
+  URLs, tags tipo HTML e limita o tamanho, mesmo que o prompt já peça pro
+  modelo não incluir isso.
+- **Containers rodam como usuário não-root** nos 3 serviços (`USER node`
+  nas imagens Node.js, usuário dedicado no worker Python), com
+  `.dockerignore` em cada um pra não copiar `.env`/`node_modules`/`.git`
+  pro contexto de build.
+- **Dead-letter queue no RabbitMQ** — mensagens que o worker não consegue
+  processar (erro de classificação, embedding, banco fora do ar) vão pra
+  `lead.ingest.dlq` em vez de serem descartadas pra sempre. Se você já tinha
+  rodado o compose antes desta mudança, o RabbitMQ recusa redeclarar a fila
+  `lead.ingest` com argumentos diferentes — apague o volume do RabbitMQ
+  (`docker compose down -v`) ou a fila pela UI de management (`:15672`)
+  antes de subir de novo.
 - Nenhum segredo commitado — `.env` no `.gitignore`, só `.env.example` versionado.
 
 ## Testes e CI
@@ -177,10 +207,12 @@ Documentadas em [`docs/ADR-001-node-python-split.md`](./docs/ADR-001-node-python
   (assinatura válida/ausente/incorreta/de outro payload, e o caminho
   fail-closed sem `WEBHOOK_SECRET`) e `validatePayload` (schema Zod).
   Rodar: `cd api && npm test`
-- **Worker** (`worker/tests`): pytest cobrindo `clean_text`/`chunk_text`
-  (ETL puro) e `classify_lead` (parsing de JSON, clamp de score 0-100,
-  fallback em temperatura desconhecida e em JSON malformado — sem chamar a
-  OpenAI de verdade, `chain` é substituído por um dublê).
+- **Worker** (`worker/tests`, 27 testes): pytest cobrindo `clean_text`/
+  `chunk_text` (ETL puro), `classify_lead` e `generate_pitch` (parsing de
+  JSON, clamp de score 0-100, fallback em temperatura desconhecida e em
+  JSON malformado — sem chamar a OpenAI de verdade, `chain` é substituído
+  por um dublê) e `security.py` (sanitização de prompt injection e de
+  saída do LLM).
   Rodar: `cd worker && pip install -r requirements-dev.txt && pytest`
 - **CI** (`.github/workflows/ci.yml`): a cada push/PR em `main`, três jobs
   paralelos — `web` (lint + `tsc --noEmit` + build), `api` (`tsc --noEmit` +

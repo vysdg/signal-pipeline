@@ -1,4 +1,4 @@
-from src.security import sanitize_untrusted_text, TAG_OPEN, TAG_CLOSE
+from src.security import sanitize_untrusted_text, sanitize_llm_output, TAG_OPEN, TAG_CLOSE
 
 
 def test_sanitize_removes_closing_tag_injected_by_attacker():
@@ -29,3 +29,34 @@ def test_sanitize_removes_multiple_occurrences():
     malicious = f"{TAG_CLOSE}{TAG_OPEN}{TAG_CLOSE}texto{TAG_OPEN}"
     sanitized = sanitize_untrusted_text(malicious)
     assert sanitized == "texto"
+
+
+def test_sanitize_llm_output_removes_urls():
+    text = "Olá! Segue o link pra agendar: https://evil.example/phish, abraço."
+    result = sanitize_llm_output(text)
+    assert "https://evil.example" not in result
+    assert "[link removido]" in result
+
+
+def test_sanitize_llm_output_removes_www_links_without_scheme():
+    text = "Confira em www.exemplo-malicioso.com para mais detalhes."
+    result = sanitize_llm_output(text)
+    assert "www.exemplo-malicioso.com" not in result
+
+
+def test_sanitize_llm_output_strips_html_like_tags():
+    text = "Olá <script>alert(1)</script> tudo bem?"
+    result = sanitize_llm_output(text)
+    assert "<script>" not in result
+    assert "</script>" not in result
+
+
+def test_sanitize_llm_output_caps_length():
+    text = "a" * 5000
+    result = sanitize_llm_output(text, max_chars=100)
+    assert len(result) == 100
+
+
+def test_sanitize_llm_output_leaves_normal_pitch_untouched():
+    text = "Olá Ana! Entendo a preocupação com o prazo. Podemos agendar uma call amanhã às 10h?"
+    assert sanitize_llm_output(text) == text

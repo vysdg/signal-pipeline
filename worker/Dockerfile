@@ -4,4 +4,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 ENV PYTHONPATH=/app
+# python:slim não vem com um usuário não-privilegiado — cria um dedicado
+# em vez de rodar o processo como root.
+RUN useradd --create-home --shell /usr/sbin/nologin appuser \
+    && chown -R appuser:appuser /app
+USER appuser
 CMD ["python", "src/main.py"]

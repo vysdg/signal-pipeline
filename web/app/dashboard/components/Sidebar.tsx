@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, GitBranch, Activity, Settings } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, Users, GitBranch, Activity, Settings, LogOut } from "lucide-react";
 
 const nav = [
   { href: "/dashboard",          icon: LayoutDashboard, label: "Dashboard" },
@@ -33,6 +33,31 @@ function NavItem({ href, icon: Icon, label }: { href: string; icon: React.Elemen
       <Icon size={13} strokeWidth={1.7} style={{ flexShrink: 0 }} />
       {label}
     </Link>
+  );
+}
+
+function LogoutButton() {
+  const router = useRouter();
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
+  return (
+    <button
+      onClick={handleLogout}
+      className="nav-item transition"
+      style={{
+        display: "flex", alignItems: "center", gap: 8,
+        height: 30, padding: "0 10px", width: "100%",
+        borderRadius: 4, border: "none", background: "transparent",
+        fontSize: 13, color: "var(--t1)", cursor: "pointer",
+        fontFamily: "inherit", textAlign: "left",
+      }}
+    >
+      <LogOut size={13} strokeWidth={1.7} style={{ flexShrink: 0 }} />
+      Sair
+    </button>
   );
 }
 
@@ -73,8 +98,11 @@ export function Sidebar() {
 
       <div style={{ height: 1, background: "var(--b0)", margin: "8px 2px" }} />
 
-      <div style={{ marginBottom: 10 }}>
+      <div style={{ marginBottom: 4 }}>
         <NavItem href="/dashboard/settings" icon={Settings} label="Settings" />
+      </div>
+      <div style={{ marginBottom: 10 }}>
+        <LogoutButton />
       </div>
 
       {/* Live indicator */}

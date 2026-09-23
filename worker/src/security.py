@@ -22,9 +22,27 @@ TAG_OPEN = "<lead_interaction>"
 TAG_CLOSE = "</lead_interaction>"
 
 _TAG_RE = re.compile(re.escape(TAG_OPEN) + "|" + re.escape(TAG_CLOSE), re.IGNORECASE)
+_URL_RE = re.compile(r"(https?://|www\.)\S+", re.IGNORECASE)
+_TAG_LIKE_RE = re.compile(r"<[^>]*>")
+
+# O pitcher gera um e-mail que um vendedor de verdade copia e envia — a
+# saída do LLM nunca deve ser confiada cegamente (OWASP LLM05:2025
+# Improper Output Handling), mesmo com a instrução no prompt pra não
+# incluir links. Isso é defesa em profundidade, não substitui a instrução.
+PITCH_MAX_CHARS = 2000
 
 
 def sanitize_untrusted_text(text: str) -> str:
     """Remove tentativas de fechar/reabrir o delimitador de dentro do
     texto do lead antes de embutir esse texto no prompt."""
     return _TAG_RE.sub("", text)
+
+
+def sanitize_llm_output(text: str, max_chars: int = PITCH_MAX_CHARS) -> str:
+    """Segunda camada de defesa sobre texto que o LLM gerou e que vai
+    virar conteúdo copiado/exibido de verdade (ex: o pitch de e-mail):
+    remove URLs e qualquer coisa parecida com tag HTML, e limita o
+    tamanho — mesmo que o prompt já peça pro modelo não fazer isso."""
+    cleaned = _URL_RE.sub("[link removido]", text)
+    cleaned = _TAG_LIKE_RE.sub("", cleaned)
+    return cleaned[:max_chars].strip()
